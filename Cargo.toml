@@ -1,0 +1,10 @@
+[package]
+name = "simple-blog-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bcrypt = "0.17.0"
+uuid = { version = "1.16.0", features = ["serde", "v4"] }
+diesel = { version = "2.2.0", features = ["postgres", "uuid"] }
+dotenvy = "0.15"
