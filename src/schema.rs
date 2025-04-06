@@ -29,7 +29,7 @@ diesel::table! {
         user_id -> Uuid,
         header -> Varchar,
         text -> Varchar,
-        date -> Date,
+        date -> Timestamptz,
     }
 }
 
@@ -41,12 +41,16 @@ diesel::table! {
         email -> Varchar,
         first_name -> Nullable<Varchar>,
         last_name -> Nullable<Varchar>,
-        reg_date -> Date,
+        reg_date -> Timestamptz,
     }
 }
 
+diesel::joinable!(comment_likes -> comments (comment_id));
+diesel::joinable!(comment_likes -> users (user_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(comments -> users (user_id));
+diesel::joinable!(post_likes -> posts (post_id));
+diesel::joinable!(post_likes -> users (user_id));
 diesel::joinable!(posts -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

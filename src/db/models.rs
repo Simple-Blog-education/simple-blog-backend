@@ -1,8 +1,11 @@
-use diesel::data_types::PgDate;
+use chrono::{DateTime, Utc};
+use diesel::data_types::{PgDate, PgTimestamp};
 use diesel::prelude::*;
-use uuid::Uuid;
+use rocket::data::FromData;
+use serde::{Deserialize, Serialize};
+use uuid::{Uuid};
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, AsChangeset)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
@@ -12,10 +15,10 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub reg_date: PgDate
+    pub reg_date: DateTime<Utc>,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
 pub struct NewUser<'a> {
     pub username: &'a str,
@@ -33,13 +36,13 @@ pub struct Post {
     pub user_id: Uuid,
     pub header: String,
     pub text: String,
-    pub date: PgDate
+    pub date: PgTimestamp
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::posts)]
 pub struct NewPost<'a> {
-    pub user_id: &'a Uuid,
+    pub user_id: Uuid,
     pub header: &'a str,
     pub text: &'a str
 }
@@ -54,11 +57,12 @@ pub struct Comment {
     pub text: String,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::comments)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewComment<'a> {
-    pub post_id: &'a Uuid,
-    pub user_id: &'a Uuid,
+    pub post_id: Uuid,
+    pub user_id: Uuid,
     pub text: &'a str,
 }
 
@@ -70,11 +74,12 @@ pub struct PostLike {
     pub post_id: Uuid
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::post_likes)]
-pub struct NewPostLike<'a> {
-    pub user_id: &'a Uuid,
-    pub post_id: &'a Uuid
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct NewPostLike {
+    pub user_id: Uuid,
+    pub post_id: Uuid
 }
 
 #[derive(Queryable, Selectable)]
@@ -85,12 +90,12 @@ pub struct CommentLike {
     pub comment_id: Uuid
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::comment_likes)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct NewCommentLike<'a> {
-    pub comment_id: &'a Uuid,
-    pub user_id: &'a Uuid,
+pub struct NewCommentLike {
+    pub comment_id: Uuid,
+    pub user_id: Uuid,
 }
 
 

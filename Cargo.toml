@@ -6,7 +6,9 @@ edition = "2021"
 [dependencies]
 bcrypt = "0.17.0"
 uuid = { version = "1.16.0", features = ["serde", "v4"] }
-diesel = { version = "2.2.0", features = ["postgres", "uuid"] }
+diesel = { version = "2.2.0", features = ["postgres", "uuid", "serde_json", "chrono"] }
+serde = { version = "1.0.219", features = ["derive"] }
 dotenvy = "0.15"
-rocket = "0.5.1"
+rocket = { version = "0.5.1", features = ["json"] }
+chrono = {version = "0.4.40", features = ["serde"]}
 

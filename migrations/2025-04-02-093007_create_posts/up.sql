@@ -3,5 +3,5 @@ CREATE TABLE posts(
     user_id UUID NOT NULL references users(id),
     header VARCHAR NOT NULL,
     text VARCHAR NOT NULL,
-    date DATE NOT NULL default CURRENT_DATE
+    date TIMESTAMP WITH TIME ZONE NOT NULL default CURRENT_DATE
 );
