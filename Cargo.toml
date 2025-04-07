@@ -9,6 +9,6 @@ uuid = { version = "1.16.0", features = ["serde", "v4"] }
 diesel = { version = "2.2.0", features = ["postgres", "uuid", "serde_json", "chrono"] }
 serde = { version = "1.0.219", features = ["derive"] }
 dotenvy = "0.15"
-rocket = { version = "0.5.1", features = ["json"] }
+rocket = { version = "0.5.1", features = ["json", "uuid"] }
 chrono = {version = "0.4.40", features = ["serde"]}
 

@@ -1,18 +1,16 @@
 use std::str::FromStr;
-use diesel::{insert_into, ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
-use diesel::dsl::update;
-use dotenvy::Iter;
-use rocket::response::status::NotFound;
+use diesel::{insert_into, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::dsl::{delete, update};
 use rocket::serde::json::Json;
 use uuid::Uuid;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{NewUser, User};
+use crate::db::models::{NewUser, User, UserChangeset};
 use crate::schema::users::dsl::users;
 
 #[post("/users/new", format = "json", data = "<data>")]
 pub fn user_new(data: Json<NewUser<'_>>) -> String {
     let mut connection = PostgresConnection::new();
-    let _ = insert_into(users).values(data.into_inner()).execute(&mut connection).expect("Error saving new user");
+    let _ =  insert_into(users).values(data.into_inner()).execute(&mut connection).expect("Error saving new user");
     "Success".to_string()
 }
 
@@ -23,23 +21,22 @@ pub fn user_all() -> Json<Vec<User>> {
     Json(result)
 }
 #[get("/users/<id>")]
-pub fn get_user(id: &str) -> Result<Json<User>, Json<String>> {
-    let uuid = match Uuid::from_str(id) {
-        Ok(uuid) => uuid,
-        Err(e) => return Err(Json(e.to_string())),
-    };
+pub fn get_user(id: Uuid) -> Result<Json<User>, Json<String>> {
     let mut connection = PostgresConnection::new();
-    let user = users.find(uuid).select(User::as_select()).first(&mut connection).expect("Error loading user");
+    let user = users.find(id).select(User::as_select()).first(&mut connection).expect("Error loading user");
     Ok(Json(user))
 }
 
 #[put("/users/<id>", format = "json", data = "<data>")]
-pub fn put_user(id: &str, data: Json<User>) -> Result<Json<User>, Json<String>> {
-    let uuid = match Uuid::from_str(id) {
-        Ok(uuid) => uuid,
-        Err(e) => return Err(Json(e.to_string())),
-    };
+pub fn put_user(id: Uuid, data: Json<UserChangeset>) -> Json<String> {
     let mut connection = PostgresConnection::new();
-    let user = update(users.find(uuid)).set(data.into_inner()).get_result(&mut connection).expect("Error updating user");
-    Ok(Json(user))
+    let _ = update(users.find(id)).set(data.into_inner()).execute(&mut connection).expect("Error updating user");
+    Json(String::from("Success"))
+}
+
+#[delete("/users/<id>")]
+pub fn delete_user(id: Uuid) -> Result<Json<String>, Json<String>> {
+    let mut connection = PostgresConnection::new();
+    let _ = delete(users.find(id)).execute(&mut connection).expect("Error deleting user");
+    Ok(Json("Success".to_string()))
 }

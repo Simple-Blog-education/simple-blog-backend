@@ -1,17 +1,14 @@
 use chrono::{DateTime, Utc};
-use diesel::data_types::{PgDate, PgTimestamp};
 use diesel::prelude::*;
-use rocket::data::FromData;
 use serde::{Deserialize, Serialize};
 use uuid::{Uuid};
 
-#[derive(Queryable, Selectable, Serialize, Deserialize, AsChangeset)]
+#[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
     pub username: String,
-    pub password: String,
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
@@ -28,7 +25,22 @@ pub struct NewUser<'a> {
     pub last_name: Option<&'a str>,
 }
 
-#[derive(Queryable, Selectable)]
+#[derive(AsChangeset, Deserialize)]
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct UserChangeset {
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub email: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct NewPasswordChangeset {
+    pub old_password: String,
+    pub new_password: String,
+}
+
+#[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::posts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Post {
@@ -36,7 +48,8 @@ pub struct Post {
     pub user_id: Uuid,
     pub header: String,
     pub text: String,
-    pub date: PgTimestamp
+    pub create_date: DateTime<Utc>,
+    pub edit_date: DateTime<Utc>
 }
 
 #[derive(Insertable, Deserialize)]
@@ -47,7 +60,15 @@ pub struct NewPost<'a> {
     pub text: &'a str
 }
 
-#[derive(Queryable, Selectable)]
+#[derive(AsChangeset, Deserialize)]
+#[diesel(table_name = crate::schema::posts)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct PostChangeset {
+    pub header: String,
+    pub text: String,
+}
+
+#[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::comments)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Comment {
@@ -64,6 +85,12 @@ pub struct NewComment<'a> {
     pub post_id: Uuid,
     pub user_id: Uuid,
     pub text: &'a str,
+}
+
+#[derive(AsChangeset, Deserialize)]
+#[diesel(table_name = crate::schema::comments)]
+pub struct CommentChangeset {
+    pub text: String,
 }
 
 #[derive(Queryable, Selectable)]

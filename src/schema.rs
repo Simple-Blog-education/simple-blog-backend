@@ -29,7 +29,8 @@ diesel::table! {
         user_id -> Uuid,
         header -> Varchar,
         text -> Varchar,
-        date -> Timestamptz,
+        create_date -> Timestamptz,
+        edit_date -> Timestamptz,
     }
 }
 
