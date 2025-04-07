@@ -28,7 +28,7 @@ pub fn put_comment(id: Uuid, comment: Json<CommentChangeset>) -> Option<Json<Com
     Some(Json(result))
 }
 
-#[post("/comments/new", data = "<comment>")]
+#[post("/comments/new", format = "json", data = "<comment>")]
 pub fn post_comment(comment: Json<NewComment<'_>>) -> Json<String> {
     let mut connection = PostgresConnection::new();
     let _ = insert_into(comments).values(comment.into_inner())

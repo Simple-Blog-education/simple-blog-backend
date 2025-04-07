@@ -2,15 +2,11 @@ pub mod api;
 pub mod db;
 pub mod schema;
 
-use diesel::sql_types::Json;
-use rocket::Config;
-use rocket::config::LogLevel;
-use rocket::figment::value::magic::RelativePathBuf;
-use rocket::http::ContentType;
 use api::index::index;
 use api::user;
 use api::post;
 use api::comment;
+use api::like;
 
 #[macro_use] extern crate rocket;
 
@@ -32,6 +28,14 @@ fn rocket() -> _ {
         comment::get_comments_user,
         comment::delete_comment,
         comment::put_comment,
-        comment::post_comment
+        comment::post_comment,
+        like::get_comment_likes,
+        like::comment_is_liked_by_user,
+        like::like_comment,
+        like::delete_comment_like,
+        like::get_post_likes,
+        like::post_is_liked_by_user,
+        like::like_post,
+        like::delete_post_like
     ])
 }
