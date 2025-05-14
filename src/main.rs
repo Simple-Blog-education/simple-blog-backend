@@ -7,6 +7,7 @@ use api::user;
 use api::post;
 use api::comment;
 use api::like;
+use crate::api::cors::CORS;
 
 #[macro_use] extern crate rocket;
 
@@ -37,5 +38,5 @@ fn rocket() -> _ {
         like::post_is_liked_by_user,
         like::like_post,
         like::delete_post_like
-    ])
+    ]).attach(CORS)
 }
