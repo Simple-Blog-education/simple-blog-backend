@@ -54,10 +54,4 @@ diesel::joinable!(post_likes -> posts (post_id));
 diesel::joinable!(post_likes -> users (user_id));
 diesel::joinable!(posts -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    comment_likes,
-    comments,
-    post_likes,
-    posts,
-    users,
-);
+diesel::allow_tables_to_appear_in_same_query!(comment_likes, comments, post_likes, posts, users,);

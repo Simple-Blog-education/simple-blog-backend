@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use uuid::{Uuid};
+use uuid::Uuid;
 
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
@@ -49,7 +49,7 @@ pub struct Post {
     pub header: String,
     pub text: String,
     pub create_date: DateTime<Utc>,
-    pub edit_date: DateTime<Utc>
+    pub edit_date: DateTime<Utc>,
 }
 
 #[derive(Insertable, Deserialize)]
@@ -57,7 +57,7 @@ pub struct Post {
 pub struct NewPost<'a> {
     pub user_id: Uuid,
     pub header: &'a str,
-    pub text: &'a str
+    pub text: &'a str,
 }
 
 #[derive(AsChangeset, Deserialize)]
@@ -98,7 +98,7 @@ pub struct CommentChangeset {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct PostLike {
     pub user_id: Uuid,
-    pub post_id: Uuid
+    pub post_id: Uuid,
 }
 
 #[derive(Insertable, Deserialize)]
@@ -106,7 +106,7 @@ pub struct PostLike {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewPostLike {
     pub user_id: Uuid,
-    pub post_id: Uuid
+    pub post_id: Uuid,
 }
 
 #[derive(Queryable, Selectable)]
@@ -114,7 +114,7 @@ pub struct NewPostLike {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct CommentLike {
     pub user_id: Uuid,
-    pub comment_id: Uuid
+    pub comment_id: Uuid,
 }
 
 #[derive(Insertable, Deserialize)]
@@ -124,5 +124,3 @@ pub struct NewCommentLike {
     pub comment_id: Uuid,
     pub user_id: Uuid,
 }
-
-
