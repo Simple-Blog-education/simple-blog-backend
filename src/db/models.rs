@@ -3,6 +3,13 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[ExistingTypePath = "crate::schema::sql_types::Roletype"]
+pub enum Role {
+    Admin,
+    User,
+}
+
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
