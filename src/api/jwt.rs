@@ -1,7 +1,7 @@
 use base64::{Engine, engine::general_purpose, prelude::BASE64_URL_SAFE_NO_PAD};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use sha2::Sha256;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -34,18 +34,10 @@ impl Payload {
 
 pub const DEFAULT_SECRET: &str = "mysecret";
 
-pub struct JWT {
-    pub header: Header,
-    pub payload: Payload,
-    pub secret: String,
-}
+pub struct JWT;
+
 impl JWT {
-    pub fn new(header: Header, payload: Payload, secret: String) -> JWT {
-        JWT {
-            header, payload, secret
-        }
-    }
-    fn verify_signature(&self, token: &str) -> Result<String, String> {
+    pub fn verify_signature(secret: String, token: &str) -> Result<String, String> {
         let parts: Vec<&str> = token.split(".").collect();
         if parts.len() != 3 {
             return Err("Invalid JWT: expected 3 parts".to_owned())
@@ -57,7 +49,7 @@ impl JWT {
 
         let signature_bytes = BASE64_URL_SAFE_NO_PAD.decode(signature_base64).unwrap();
 
-        let mut mac = HmacSha256::new_from_slice(&self.secret.as_bytes()).unwrap();
+        let mut mac = HmacSha256::new_from_slice(&secret.as_bytes()).unwrap();
 
         mac.update(data_to_hash.as_bytes());
 
@@ -65,16 +57,16 @@ impl JWT {
 
         Ok("Success".to_string())
     }   
-    pub fn make_token(&self) -> Result<String, String> {
-        let header_json = serde_json::to_string(&self.header).unwrap();
+    pub fn make_token(header: Header, payload: Payload, secret: String) -> Result<String, String> {
+        let header_json = serde_json::to_string(&header).unwrap();
         let header_base64 = general_purpose::STANDARD.encode(header_json);
 
-        let payload_json = serde_json::to_string(&self.payload).unwrap();
+        let payload_json = serde_json::to_string(&payload).unwrap();
         let payload_base64 = general_purpose::STANDARD.encode(payload_json);
 
         let data_to_hash = format!("{}.{}", header_base64, payload_base64);
 
-        let mut mac = HmacSha256::new_from_slice(self.secret.as_bytes()).unwrap();
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
         mac.update(data_to_hash.as_bytes());
         let signature = mac.finalize().into_bytes();
 
