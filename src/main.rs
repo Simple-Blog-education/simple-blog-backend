@@ -3,17 +3,27 @@ pub mod db;
 pub mod schema;
 
 use crate::api::cors::CORS;
+use crate::api::jwt::Header;
+use crate::api::jwt::Payload;
 use api::comment;
 use api::index::index;
 use api::like;
 use api::post;
 use api::user;
+use api::jwt;
 
 #[macro_use]
 extern crate rocket;
 
 #[launch]
 fn rocket() -> _ {
+    let jwt = jwt::JWT {
+        header: Header::new("HS256".to_owned(), "JWT".to_owned()),
+        payload: Payload::new("lol".to_owned(), "Admin".to_owned()),
+        secret: jwt::DEFAULT_SECRET.to_owned()
+    };
+    let token = jwt.make_token();
+    print!("{}", token.unwrap());
     rocket::build()
         .mount(
             "/api/v1",
