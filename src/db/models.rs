@@ -131,3 +131,15 @@ pub struct NewCommentLike {
     pub comment_id: Uuid,
     pub user_id: Uuid,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TokenPair {
+    pub auth_token: String,
+    pub refresh_token: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoginCredentials {
+    pub username: String,
+    pub password: String
+}

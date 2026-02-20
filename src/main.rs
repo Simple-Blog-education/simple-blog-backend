@@ -18,7 +18,7 @@ extern crate rocket;
 #[launch]
 fn rocket() -> _ {
     let token = jwt::JWT::make_token(Header::new("HS256".to_owned(), "JWT".to_owned()),
-        Payload::new("lol".to_owned(), "Admin".to_owned()),
+        Payload::new("lol".to_owned(), "Admin".to_owned(), jwt::TokenType::Auth),
         jwt::DEFAULT_SECRET.to_owned());
     print!("{}", token.unwrap());
     rocket::build()

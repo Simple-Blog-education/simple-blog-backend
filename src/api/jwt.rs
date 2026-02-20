@@ -1,7 +1,10 @@
 use base64::{Engine, engine::general_purpose, prelude::BASE64_URL_SAFE_NO_PAD};
 use hmac::{Hmac, Mac};
+use rocket::{Request, http::Status, request::{FromRequest, Outcome}};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
+
+use crate::api::jwt;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -20,14 +23,21 @@ impl Header {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub enum TokenType {
+    Auth = 1,
+    Refresh = 2
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Payload {
     username:String,
-    role: String
+    role: String,
+    auth: TokenType
 }
 
 impl Payload {
-    pub fn new(username: String, role: String) -> Payload {
-        Payload { username, role }
+    pub fn new(username: String, role: String, auth: TokenType) -> Payload {
+        Payload { username, role, auth }
     }
 }
 
@@ -72,5 +82,23 @@ impl JWT {
 
         let signature_base64 = BASE64_URL_SAFE_NO_PAD.encode(signature);
         Ok(format!("{}.{}.{}", header_base64, payload_base64, signature_base64))
+    }
+}
+
+#[derive(Debug)]
+pub enum JWTError {
+    Missing = 1,
+    Invalid = 2
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for JWT {
+    type Error = JWTError;
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        match request.headers().get_one("Authorization") {
+            None => Outcome::Error((Status::BadRequest, JWTError::Missing)),
+            Some(key) if (JWT::verify_signature(jwt::DEFAULT_SECRET.to_owned(), key.split(":").collect::<Vec<&str>>()[1]).unwrap() == "Success") => Outcome::Success(JWT),
+            Some(_) => Outcome::Error((Status::BadRequest, JWTError::Invalid)),
+        }
     }
 }
