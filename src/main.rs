@@ -11,13 +11,14 @@ use api::like;
 use api::post;
 use api::user;
 use api::jwt;
+use api::auth;
 
 #[macro_use]
 extern crate rocket;
 
 #[launch]
 fn rocket() -> _ {
-    let token = jwt::JWT::make_token(Header::new("HS256".to_owned(), "JWT".to_owned()),
+    let token = jwt::JWT::make_token(jwt::DEFAULT_HEADER,
         Payload::new("lol".to_owned(), "Admin".to_owned(), jwt::TokenType::Auth),
         jwt::DEFAULT_SECRET.to_owned());
     print!("{}", token.unwrap());
@@ -26,7 +27,7 @@ fn rocket() -> _ {
             "/api/v1",
             routes![
                 index,
-                user::user_new,
+                auth::user_new,
                 user::get_user,
                 user::user_all,
                 user::delete_user,

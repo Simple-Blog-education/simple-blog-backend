@@ -1,20 +1,10 @@
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{NewUser, User, UserChangeset};
+use crate::db::models::{User, UserChangeset};
 use crate::schema::users::dsl::users;
 use diesel::dsl::{delete, update};
-use diesel::{insert_into, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
 use rocket::serde::json::Json;
 use uuid::Uuid;
-
-#[post("/users/new", format = "json", data = "<data>")]
-pub fn user_new(data: Json<NewUser<'_>>) -> String {
-    let mut connection = PostgresConnection::new();
-    let _ = insert_into(users)
-        .values(data.into_inner())
-        .execute(&mut connection)
-        .expect("Error saving new user");
-    "Success".to_string()
-}
 
 #[get("/users/all")]
 pub fn user_all() -> Json<Vec<User>> {

@@ -9,18 +9,15 @@ use crate::api::jwt;
 type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Header {
-    alg: String,
-    typ: String
+pub struct Header<'a> {
+    alg: &'a str,
+    typ: &'a str
 }
 
-impl Header {
-    pub fn new(alg: String, typ: String) -> Header {
-        Header {
-            alg, typ
-        }
-    }
-}
+pub const DEFAULT_HEADER: jwt::Header = Header {
+    alg: "HS256", 
+    typ:"JWT"
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum TokenType {
