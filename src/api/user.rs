@@ -1,8 +1,10 @@
+use crate::api::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::db::models::{User, UserChangeset};
 use crate::schema::users::dsl::users;
 use diesel::dsl::{delete, update};
 use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
+use rocket::request::FromRequest;
 use rocket::serde::json::Json;
 use uuid::Uuid;
 
@@ -28,7 +30,7 @@ pub fn get_user(id: Uuid) -> Result<Json<User>, Json<String>> {
 }
 
 #[put("/users/<id>", format = "json", data = "<data>")]
-pub fn put_user(id: Uuid, data: Json<UserChangeset>) -> Json<String> {
+pub fn put_user(id: Uuid, data: Json<UserChangeset>, token: JWT) -> Json<String> {
     let mut connection = PostgresConnection::new();
     let _ = update(users.find(id))
         .set(data.into_inner())

@@ -1,3 +1,4 @@
+use crate::api::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::db::models::{NewPost, Post, PostChangeset};
 use crate::schema::posts::dsl::posts;
@@ -8,7 +9,7 @@ use rocket::serde::json::Json;
 use uuid::Uuid;
 
 #[get("/posts/all")]
-pub fn get_all_posts() -> Json<Vec<Post>> {
+pub fn get_all_posts(_token: JWT) -> Json<Vec<Post>> {
     let mut connection = PostgresConnection::new();
     let posts_result = posts
         .limit(50)
