@@ -94,7 +94,7 @@ impl<'r> FromRequest<'r> for JWT {
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match request.headers().get_one("Authorization") {
             None => Outcome::Error((Status::BadRequest, JWTError::Missing)),
-            Some(key) if (JWT::verify_signature(jwt::DEFAULT_SECRET.to_owned(), key.split(":").collect::<Vec<&str>>()[1]).unwrap() == "Success") => Outcome::Success(JWT),
+            Some(key) if (JWT::verify_signature(jwt::DEFAULT_SECRET.to_owned(), key.split(" ").collect::<Vec<&str>>()[1]).unwrap() == "Success") => Outcome::Success(JWT),
             Some(_) => Outcome::Error((Status::BadRequest, JWTError::Invalid)),
         }
     }

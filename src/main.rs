@@ -1,8 +1,7 @@
 pub mod api;
 pub mod db;
 pub mod schema;
-
-use crate::api::cors::CORS;
+use crate::api::cors::cors_fairing;
 use crate::api::jwt::Payload;
 use api::comment;
 use api::index::index;
@@ -22,7 +21,7 @@ fn rocket() -> _ {
         jwt::DEFAULT_SECRET.to_owned());
     print!("{}", token.unwrap());
     rocket::build()
-        .attach(CORS)
+        .attach(cors_fairing())
         .mount(
             "/api/v1",
             routes![
