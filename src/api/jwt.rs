@@ -1,6 +1,7 @@
 use std::env;
 
 use base64::{Engine, engine::general_purpose, prelude::BASE64_URL_SAFE_NO_PAD};
+use dotenvy::dotenv;
 use hmac::{Hmac, Mac};
 use rocket::{Request, http::Status, request::{FromRequest, Outcome}};
 use serde::{Deserialize, Serialize};
@@ -41,6 +42,7 @@ impl Payload {
 }
 
 pub fn get_default_secret() -> String {
+    let _ = dotenv();
     return env::var("JWT_SECRET").expect("JWT Secret missing!");
 }
 
