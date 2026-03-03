@@ -18,7 +18,7 @@ extern crate rocket;
 fn rocket() -> _ {
     let token = jwt::JWT::make_token(jwt::DEFAULT_HEADER,
         Payload::new("lol".to_owned(), "Admin".to_owned(), jwt::TokenType::Auth),
-        jwt::DEFAULT_SECRET.to_owned());
+        jwt::get_default_secret());
     print!("{}", token.unwrap());
     rocket::build()
         .attach(cors_fairing())

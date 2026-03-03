@@ -16,7 +16,7 @@ pub fn login(data: Json<LoginCredentials>) -> Json<TokenPair> {
         Ok(user) => {
             let username = user.0;
             let payload = jwt::Payload::new(username,"admin".to_string(), jwt::TokenType::Auth);
-            let token = JWT::make_token(jwt::DEFAULT_HEADER, payload, jwt::DEFAULT_SECRET.to_string()).unwrap();
+            let token = JWT::make_token(jwt::DEFAULT_HEADER, payload, jwt::get_default_secret()).unwrap();
             token_pair.auth_token = token;
         }
         Err(_) => return Json(token_pair)
