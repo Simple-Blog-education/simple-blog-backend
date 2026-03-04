@@ -1,25 +1,26 @@
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
-use rocket::{Request, Response};
+use rocket::http::Method;
+use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors, CorsOptions};
 
-pub struct CORS;
-
-#[rocket::async_trait]
-impl Fairing for CORS {
-    fn info(&self) -> Info {
-        Info {
-            name: "Add CORS headers to responses",
-            kind: Kind::Response,
-        }
+pub fn cors_fairing() -> Cors {
+    let allowed_origins = AllowedOrigins::All;
+    let allowed_methods = vec![
+        Method::Get,
+        Method::Post,
+        Method::Put,
+        Method::Delete,
+        Method::Options,
+    ]
+    .into_iter()
+    .map(From::from)
+    .collect();
+    let allowed_headers = AllowedHeaders::All;
+    CorsOptions {
+        allowed_origins,
+        allowed_methods,
+        allowed_headers,
+        allow_credentials: true,
+        ..Default::default()
     }
-
-    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
-        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(Header::new(
-            "Access-Control-Allow-Methods",
-            "POST, GET, PUT, DELETE, OPTIONS",
-        ));
-        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
-        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
-    }
+    .to_cors()
+    .expect("Error while creating CORS fairing")
 }

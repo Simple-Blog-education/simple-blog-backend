@@ -12,7 +12,7 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub reg_date: DateTime<Utc>,
+    pub reg_date: DateTime<Utc>
 }
 
 #[derive(Insertable, Deserialize)]
@@ -123,4 +123,10 @@ pub struct CommentLike {
 pub struct NewCommentLike {
     pub comment_id: Uuid,
     pub user_id: Uuid,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoginCredentials {
+    pub username: String,
+    pub password: String
 }
