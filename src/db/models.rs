@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -10,6 +12,15 @@ pub enum Role {
     User,
 }
 
+impl Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Role::Admin => f.write_str("Admin"),
+            Role::User => f.write_str("User")
+        }
+    }
+}
+
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -19,7 +30,7 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub reg_date: DateTime<Utc>,
+    pub reg_date: DateTime<Utc>
 }
 
 #[derive(Insertable, Deserialize)]
