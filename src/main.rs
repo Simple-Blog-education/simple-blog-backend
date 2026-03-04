@@ -1,13 +1,13 @@
 pub mod api;
 pub mod db;
 pub mod schema;
-
-use crate::api::cors::CORS;
+use crate::api::cors::cors_fairing;
 use api::comment;
 use api::index::index;
 use api::like;
 use api::post;
 use api::user;
+use api::auth;
 
 #[macro_use]
 extern crate rocket;
@@ -15,11 +15,13 @@ extern crate rocket;
 #[launch]
 fn rocket() -> _ {
     rocket::build()
+        .attach(cors_fairing())
         .mount(
             "/api/v1",
             routes![
                 index,
-                user::user_new,
+                auth::user_new,
+                auth::login,
                 user::get_user,
                 user::user_all,
                 user::delete_user,
@@ -44,5 +46,4 @@ fn rocket() -> _ {
                 like::delete_post_like
             ],
         )
-        .attach(CORS)
 }

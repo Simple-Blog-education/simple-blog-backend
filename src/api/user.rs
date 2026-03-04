@@ -1,23 +1,14 @@
+use crate::api::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{NewUser, User, UserChangeset};
+use crate::db::models::{User, UserChangeset};
 use crate::schema::users::dsl::users;
 use diesel::dsl::{delete, update};
-use diesel::{insert_into, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
 use rocket::serde::json::Json;
 use uuid::Uuid;
 
-#[post("/users/new", format = "json", data = "<data>")]
-pub fn user_new(data: Json<NewUser<'_>>) -> String {
-    let mut connection = PostgresConnection::new();
-    let _ = insert_into(users)
-        .values(data.into_inner())
-        .execute(&mut connection)
-        .expect("Error saving new user");
-    "Success".to_string()
-}
-
 #[get("/users/all")]
-pub fn user_all() -> Json<Vec<User>> {
+pub fn user_all(_jwt: JWT) -> Json<Vec<User>> {
     let mut connection = PostgresConnection::new();
     let result = users
         .limit(500)
@@ -38,7 +29,7 @@ pub fn get_user(id: Uuid) -> Result<Json<User>, Json<String>> {
 }
 
 #[put("/users/<id>", format = "json", data = "<data>")]
-pub fn put_user(id: Uuid, data: Json<UserChangeset>) -> Json<String> {
+pub fn put_user(id: Uuid, data: Json<UserChangeset>, _token: JWT) -> Json<String> {
     let mut connection = PostgresConnection::new();
     let _ = update(users.find(id))
         .set(data.into_inner())
@@ -48,7 +39,7 @@ pub fn put_user(id: Uuid, data: Json<UserChangeset>) -> Json<String> {
 }
 
 #[delete("/users/<id>")]
-pub fn delete_user(id: Uuid) -> Result<Json<String>, Json<String>> {
+pub fn delete_user(id: Uuid, _jwt: JWT) -> Result<Json<String>, Json<String>> {
     let mut connection = PostgresConnection::new();
     let _ = delete(users.find(id))
         .execute(&mut connection)

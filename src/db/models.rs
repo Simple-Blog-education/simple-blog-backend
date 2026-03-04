@@ -3,13 +3,6 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(diesel_derive_enum::DbEnum, Debug)]
-#[ExistingTypePath = "crate::schema::sql_types::Roletype"]
-pub enum Role {
-    Admin,
-    User,
-}
-
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -19,7 +12,7 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub reg_date: DateTime<Utc>,
+    pub reg_date: DateTime<Utc>
 }
 
 #[derive(Insertable, Deserialize)]
@@ -130,4 +123,10 @@ pub struct CommentLike {
 pub struct NewCommentLike {
     pub comment_id: Uuid,
     pub user_id: Uuid,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoginCredentials {
+    pub username: String,
+    pub password: String
 }
