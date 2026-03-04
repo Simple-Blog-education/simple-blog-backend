@@ -8,7 +8,7 @@ use rocket::serde::json::Json;
 use uuid::Uuid;
 
 #[get("/users/all")]
-pub fn user_all() -> Json<Vec<User>> {
+pub fn user_all(_jwt: JWT) -> Json<Vec<User>> {
     let mut connection = PostgresConnection::new();
     let result = users
         .limit(500)
@@ -39,7 +39,7 @@ pub fn put_user(id: Uuid, data: Json<UserChangeset>, _token: JWT) -> Json<String
 }
 
 #[delete("/users/<id>")]
-pub fn delete_user(id: Uuid) -> Result<Json<String>, Json<String>> {
+pub fn delete_user(id: Uuid, _jwt: JWT) -> Result<Json<String>, Json<String>> {
     let mut connection = PostgresConnection::new();
     let _ = delete(users.find(id))
         .execute(&mut connection)

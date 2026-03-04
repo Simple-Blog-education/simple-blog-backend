@@ -85,6 +85,9 @@ impl JWT {
         let signature_base64 = BASE64_URL_SAFE_NO_PAD.encode(signature);
         Ok(format!("{}.{}.{}", header_base64, payload_base64, signature_base64))
     }
+    pub fn get_payload() {
+        todo!("Эта функция будет вместо текущей функции проверки подписи и будет сделана в рамках выноса бд в отдельный слой")
+    }
 }
 
 #[derive(Debug)]
@@ -104,3 +107,5 @@ impl<'r> FromRequest<'r> for JWT {
         }
     }
 }
+
+// TODO: Проверка на текущую роль будет сделана в рамках выноса БД в отдельный слой

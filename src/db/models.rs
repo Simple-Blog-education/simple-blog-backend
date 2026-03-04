@@ -1,25 +1,7 @@
-use std::fmt::Display;
-
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-#[derive(diesel_derive_enum::DbEnum, Debug, Serialize, Deserialize)]
-#[ExistingTypePath = "crate::schema::sql_types::Roletype"]
-pub enum Role {
-    Admin,
-    User,
-}
-
-impl Display for Role {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Role::Admin => f.write_str("Admin"),
-            Role::User => f.write_str("User")
-        }
-    }
-}
 
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
@@ -141,12 +123,6 @@ pub struct CommentLike {
 pub struct NewCommentLike {
     pub comment_id: Uuid,
     pub user_id: Uuid,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TokenPair {
-    pub auth_token: String,
-    pub refresh_token: String
 }
 
 #[derive(Debug, Serialize, Deserialize)]

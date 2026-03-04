@@ -2,13 +2,11 @@ pub mod api;
 pub mod db;
 pub mod schema;
 use crate::api::cors::cors_fairing;
-use crate::api::jwt::Payload;
 use api::comment;
 use api::index::index;
 use api::like;
 use api::post;
 use api::user;
-use api::jwt;
 use api::auth;
 
 #[macro_use]
@@ -16,10 +14,6 @@ extern crate rocket;
 
 #[launch]
 fn rocket() -> _ {
-    let token = jwt::JWT::make_token(jwt::DEFAULT_HEADER,
-        Payload::new("lol".to_owned(), "Admin".to_owned(), jwt::TokenType::Auth),
-        jwt::get_default_secret());
-    print!("{}", token.unwrap());
     rocket::build()
         .attach(cors_fairing())
         .mount(
@@ -27,6 +21,7 @@ fn rocket() -> _ {
             routes![
                 index,
                 auth::user_new,
+                auth::login,
                 user::get_user,
                 user::user_all,
                 user::delete_user,

@@ -1,11 +1,5 @@
 // @generated automatically by Diesel CLI.
 
-pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "roletype"))]
-    pub struct Roletype;
-}
-
 diesel::table! {
     comment_likes (user_id, comment_id) {
         user_id -> Uuid,
@@ -41,9 +35,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::Roletype;
-
     users (id) {
         id -> Uuid,
         username -> Varchar,
@@ -52,7 +43,7 @@ diesel::table! {
         first_name -> Nullable<Varchar>,
         last_name -> Nullable<Varchar>,
         reg_date -> Timestamptz,
-        role -> Roletype,
+        role -> Text,
     }
 }
 

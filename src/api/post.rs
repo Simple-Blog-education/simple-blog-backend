@@ -31,7 +31,7 @@ pub fn get_post(id: Uuid) -> Option<Json<Post>> {
 }
 
 #[post("/posts/new", format = "json", data = "<post>")]
-pub fn post_post(post: Json<NewPost<'_>>) -> String {
+pub fn post_post(post: Json<NewPost<'_>>, _jwt: JWT) -> String {
     let mut connection = PostgresConnection::new();
     let _ = insert_into(posts)
         .values(post.into_inner())
@@ -41,7 +41,7 @@ pub fn post_post(post: Json<NewPost<'_>>) -> String {
 }
 
 #[put("/posts/<id>", format = "json", data = "<post>")]
-pub fn put_post(id: Uuid, post: Json<PostChangeset>) -> Option<Json<Post>> {
+pub fn put_post(id: Uuid, post: Json<PostChangeset>, _jwt: JWT) -> Option<Json<Post>> {
     let mut connection = PostgresConnection::new();
     let updated_post = update(posts.find(id))
         .set((post.into_inner(), edit_date.eq(now)))
@@ -52,7 +52,7 @@ pub fn put_post(id: Uuid, post: Json<PostChangeset>) -> Option<Json<Post>> {
 }
 
 #[delete("/posts/<id>")]
-pub fn delete_post(id: Uuid) -> Option<String> {
+pub fn delete_post(id: Uuid, _jwt: JWT) -> Option<String> {
     let mut connection = PostgresConnection::new();
     let _ = delete(posts.find(id))
         .execute(&mut connection)

@@ -1,28 +1,30 @@
 use diesel::{insert_into, RunQueryDsl};
 use diesel::prelude::*;
 use crate::api::jwt::{self, JWT};
-use crate::db::models::{LoginCredentials, NewUser, Role, TokenPair};
+use crate::db::models::{LoginCredentials, NewUser};
 use rocket::serde::json::Json;
 use crate::schema::users;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::schema::users::dsl::users as users_dsl;
 
 #[post("/auth/login", format = "json", data = "<data>")]
-pub fn login(data: Json<LoginCredentials>) -> Json<TokenPair> {
+pub fn login(data: Json<LoginCredentials>) -> Result<Json<String>, Json<String>> {
     let mut connection = PostgresConnection::new();
-    let password = users::table.filter(users::username.eq(&data.username)).select((users::username, users::password, users::role)).first::<(String, String, Role)>(&mut connection);
-    let mut token_pair = TokenPair { auth_token: "".to_string(), refresh_token: "".to_string() };
-    match password {
+    let present = users::table.filter(users::username.eq(&data.username)).select((users::username, users::password, users::role)).first::<(String, String, String)>(&mut connection);
+    let token;
+    match present {
         Ok(user) => {
             let username = user.0;
             let role = user.2;
-            let payload = jwt::Payload::new(username, role.to_string(), jwt::TokenType::Auth);
-            let token = JWT::make_token(jwt::DEFAULT_HEADER, payload, jwt::get_default_secret()).unwrap();
-            token_pair.auth_token = token;
+            let payload = jwt::Payload::new(username, role, jwt::TokenType::Auth);
+            token = JWT::make_token(jwt::DEFAULT_HEADER, payload, jwt::get_default_secret()).unwrap();
         }
-        Err(_) => return Json(token_pair)
+        Err(err) => {
+            println!("{}", err);
+            return Err(Json("Failed".to_string()));
+        }
     }
-    return Json(token_pair);
+    return Ok(Json(token));
 }
 
 #[post("/auth/signup", format = "json", data = "<data>")]
@@ -33,9 +35,4 @@ pub fn user_new(data: Json<NewUser<'_>>) -> String {
         .execute(&mut connection)
         .expect("Error saving new user");
     "Success".to_string()
-}
-
-#[post("/auth/refresh")]
-pub fn refresh() {
-
 }
