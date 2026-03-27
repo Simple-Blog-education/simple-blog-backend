@@ -28,11 +28,11 @@ pub fn login(data: Json<LoginCredentials>) -> Result<Json<String>, Json<String>>
 }
 
 #[post("/auth/signup", format = "json", data = "<data>")]
-pub fn user_new(data: Json<NewUser<'_>>) -> String {
+pub fn user_new(data: Json<NewUser<'_>>) -> Json<String> {
     let mut connection = PostgresConnection::new();
     let _ = insert_into(users_dsl)
         .values(data.into_inner())
         .execute(&mut connection)
         .expect("Error saving new user");
-    "Success".to_string()
+    Json("Success".to_string())
 }
