@@ -1,6 +1,6 @@
-use crate::api::jwt::JWT;
+use crate::routes::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{Comment, CommentChangeset, NewComment};
+use crate::db::models::comment_models::{Comment, CommentChangeset, NewComment};
 use crate::schema::comments::dsl::comments;
 use crate::schema::comments::{
     id as comments_id, post_id as comments_post_id, user_id as comments_user_id,

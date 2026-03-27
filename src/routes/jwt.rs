@@ -7,7 +7,7 @@ use rocket::{Request, http::Status, request::{FromRequest, Outcome}};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 
-use crate::api::jwt;
+use crate::routes::jwt;
 
 type HmacSha256 = Hmac<Sha256>;
 

@@ -1,6 +1,6 @@
-use crate::api::jwt::JWT;
+use crate::routes::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{User, UserChangeset};
+use crate::db::models::user_models::{User, UserChangeset};
 use crate::schema::users::dsl::users;
 use diesel::dsl::{delete, update};
 use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};

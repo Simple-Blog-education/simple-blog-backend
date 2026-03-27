@@ -1,7 +1,8 @@
-use crate::api::jwt::JWT;
-use crate::api::user::get_user;
+use crate::routes::jwt::JWT;
+use crate::routes::user_routes::get_user;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{CommentLike, NewCommentLike, NewPostLike, PostLike, User};
+use crate::db::models::like_models::{CommentLike, NewCommentLike, NewPostLike, PostLike};
+use crate::db::models::user_models::User;
 use crate::schema::comment_likes::comment_id as comment_likes_comment_id;
 use crate::schema::comment_likes::dsl::comment_likes;
 use crate::schema::comment_likes::user_id as comment_likes_user_id;

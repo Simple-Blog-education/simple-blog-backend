@@ -1,7 +1,7 @@
 use diesel::{insert_into, RunQueryDsl};
 use diesel::prelude::*;
-use crate::api::jwt::{self, JWT};
-use crate::db::models::{LoginCredentials, NewUser};
+use crate::routes::jwt::{self, JWT};
+use crate::db::models::user_models::{LoginCredentials, NewUser};
 use rocket::serde::json::Json;
 use crate::schema::users;
 use crate::db::db_connection::{DBConnection, PostgresConnection};

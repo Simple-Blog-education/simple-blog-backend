@@ -1,6 +1,6 @@
-use crate::api::jwt::JWT;
+use crate::routes::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::{NewPost, Post, PostChangeset};
+use crate::db::models::post_models::{NewPost, Post, PostChangeset};
 use crate::schema::posts::dsl::posts;
 use crate::schema::posts::edit_date;
 use diesel::dsl::{delete, now, update};
