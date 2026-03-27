@@ -1,6 +1,7 @@
 pub mod api;
 pub mod db;
 pub mod schema;
+use std::env;
 use crate::api::cors::cors_fairing;
 use api::comment;
 use api::index::index;
@@ -14,7 +15,10 @@ extern crate rocket;
 
 #[launch]
 fn rocket() -> _ {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let pool = db::db_connection::init_pool(database_url.as_str());
     rocket::build()
+        .manage(pool)
         .attach(cors_fairing())
         .mount(
             "/api/v1",
