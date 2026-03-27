@@ -9,12 +9,14 @@ use api::like;
 use api::post;
 use api::user;
 use api::auth;
+use dotenvy::dotenv;
 
 #[macro_use]
 extern crate rocket;
 
 #[launch]
 fn rocket() -> _ {
+    dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = db::db_connection::init_pool(database_url.as_str());
     rocket::build()
