@@ -1,7 +1,6 @@
 pub mod api;
 pub mod db;
 pub mod schema;
-use std::env;
 use crate::api::cors::cors_fairing;
 use api::comment;
 use api::index::index;
@@ -9,16 +8,14 @@ use api::like;
 use api::post;
 use api::user;
 use api::auth;
-use dotenvy::dotenv;
 
 #[macro_use]
 extern crate rocket;
 
 #[launch]
 fn rocket() -> _ {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = db::db_connection::init_pool(database_url.as_str());
+    let database_url = db::db_connection::DbPoolManager::get_database_url_from_dotenv();
+    let pool = db::db_connection::DbPoolManager::init_pool(database_url.as_str());
     rocket::build()
         .manage(pool)
         .attach(cors_fairing())
