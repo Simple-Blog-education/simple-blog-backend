@@ -1,7 +1,7 @@
 use crate::routes::jwt::JWT;
 use crate::routes::user_routes::get_user;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
-use crate::db::models::like_models::{CommentLike, NewCommentLike, NewPostLike, PostLike};
+use crate::db::models::like_models::{CommentLike, NewCommentLike, PostLike};
 use crate::db::models::user_models::User;
 use crate::schema::comment_likes::comment_id as comment_likes_comment_id;
 use crate::schema::comment_likes::dsl::comment_likes;
@@ -66,7 +66,7 @@ pub fn post_is_liked_by_user(user_id: Uuid, post_id: Uuid) -> Json<bool> {
 #[post("/users/<user_id>/post_likes/<post_id>")]
 pub fn like_post(user_id: Uuid, post_id: Uuid, _jwt: JWT) -> Option<Json<String>> {
     let mut connection = PostgresConnection::new();
-    let post_like_struct = NewPostLike { user_id, post_id };
+    let post_like_struct = PostLike { user_id, post_id };
     let _ = insert_into(post_likes)
         .values(post_like_struct)
         .execute(&mut connection)

@@ -1,6 +1,7 @@
 pub mod db;
 pub mod routes;
 pub mod schema;
+pub mod services;
 use crate::routes::cors::cors_fairing;
 use routes::{auth_routes, comment_routes, index::index, like_routes, post_routes, user_routes};
 
