@@ -1,48 +1,54 @@
-use crate::routes::jwt::JWT;
-use crate::db::db_connection::{DBConnection, PostgresConnection};
+use crate::routes::jwt::Auth;
 use crate::db::models::user_models::{User, UserChangeset};
-use crate::schema::users::dsl::users;
-use diesel::dsl::{delete, update};
-use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
+use crate::services::error::ServiceError;
+use crate::services::user_service::UserService;
+use rocket::State;
+use rocket::http::Status;
 use rocket::serde::json::Json;
 use uuid::Uuid;
 
 #[get("/users/all")]
-pub fn user_all(_jwt: JWT) -> Json<Vec<User>> {
-    let mut connection = PostgresConnection::new();
-    let result = users
-        .limit(500)
-        .select(User::as_select())
-        .load(&mut connection)
-        .expect("Error loading users");
-    Json(result)
+pub async fn user_all(_jwt: Auth, service: &State<UserService>) -> Result<Json<Vec<User>>, (Status, Json<String>)> {
+    match service.get_all_users(500).await {
+        Ok(users_struct) => Ok(Json(users_struct)),
+        Err(e) => {
+            eprintln!("Error loading users: {}", e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 #[get("/users/<id>")]
-pub fn get_user(id: Uuid) -> Result<Json<User>, Json<String>> {
-    let mut connection = PostgresConnection::new();
-    let user = users
-        .find(id)
-        .select(User::as_select())
-        .first(&mut connection)
-        .expect("Error loading user");
-    Ok(Json(user))
+pub async fn get_user(id: Uuid, service: &State<UserService>) -> Result<Json<User>, (Status, Json<String>)> {
+    match service.get_user_by_id(id).await {
+        Ok(user) => Ok(Json(user)),
+        Err(ServiceError::NotFound) => Err((Status::NotFound, Json(format!("User with id {} not found", id).into()))),
+        Err(e) => {
+            eprintln!("Error loading user with id: {}: {}", id, e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 
 #[put("/users/<id>", format = "json", data = "<data>")]
-pub fn put_user(id: Uuid, data: Json<UserChangeset>, _token: JWT) -> Json<String> {
-    let mut connection = PostgresConnection::new();
-    let _ = update(users.find(id))
-        .set(data.into_inner())
-        .execute(&mut connection)
-        .expect("Error updating user");
-    Json(String::from("Success"))
+pub async fn put_user(id: Uuid, data: Json<UserChangeset>, _token: Auth, service: &State<UserService>) -> Result<(Status,Json<User>), (Status, Json<String>)> {
+    match service.put_user(id, data.into_inner()).await {
+        Ok(changed) => Ok((Status::Created, Json(changed))),
+        Err(ServiceError::NotFound) => Err((Status::NotFound, Json(format!("User with id {} not found", id).into()))),
+        Err(e) => {
+            eprintln!("Error loading user with id: {}: {}", id, e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 
 #[delete("/users/<id>")]
-pub fn delete_user(id: Uuid, _jwt: JWT) -> Result<Json<String>, Json<String>> {
-    let mut connection = PostgresConnection::new();
-    let _ = delete(users.find(id))
-        .execute(&mut connection)
-        .expect("Error deleting user");
-    Ok(Json("Success".to_string()))
+pub async fn delete_user(id: Uuid, _jwt: Auth, service: &State<UserService>) -> Result<Status, (Status, Json<String>)> {
+    match service.delete_user(id).await {
+        Ok(_msg) => Ok(Status::NoContent),
+        Err(ServiceError::NotFound) => Err((Status::NotFound, Json(format!("User with id {} not found", id).into()))),
+        Err(e) => {
+            eprintln!("Error loading user with id: {}: {}", id, e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }

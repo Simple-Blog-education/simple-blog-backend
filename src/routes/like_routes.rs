@@ -1,4 +1,4 @@
-use crate::routes::jwt::JWT;
+use crate::routes::jwt::Auth;
 use crate::routes::user_routes::get_user;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::db::models::like_models::{CommentLike, NewCommentLike, PostLike};
@@ -25,7 +25,7 @@ pub fn get_comment_likes(comment_id: Uuid) -> Json<Vec<User>> {
         .expect("Error loading likes");
     let mut result: Vec<User> = vec![];
     for like in likes.iter() {
-        result.push(get_user(like.user_id).unwrap().into_inner());
+        // result.push(get_user(like.user_id).unwrap().into_inner());
     }
     Json(result)
 }
@@ -40,7 +40,7 @@ pub fn get_post_likes(post_id: Uuid) -> Json<Vec<User>> {
         .expect("Error loading likes");
     let mut result: Vec<User> = vec![];
     for like in likes.iter() {
-        result.push(get_user(like.user_id).unwrap().into_inner());
+        // result.push(get_user(like.user_id).unwrap().into_inner());
     }
     Json(result)
 }
@@ -64,7 +64,7 @@ pub fn post_is_liked_by_user(user_id: Uuid, post_id: Uuid) -> Json<bool> {
 }
 
 #[post("/users/<user_id>/post_likes/<post_id>")]
-pub fn like_post(user_id: Uuid, post_id: Uuid, _jwt: JWT) -> Option<Json<String>> {
+pub fn like_post(user_id: Uuid, post_id: Uuid, _jwt: Auth) -> Option<Json<String>> {
     let mut connection = PostgresConnection::new();
     let post_like_struct = PostLike { user_id, post_id };
     let _ = insert_into(post_likes)
@@ -75,7 +75,7 @@ pub fn like_post(user_id: Uuid, post_id: Uuid, _jwt: JWT) -> Option<Json<String>
 }
 
 #[delete("/users/<user_id>/post_likes/<post_id>")]
-pub fn delete_post_like(user_id: Uuid, post_id: Uuid, _jwt: JWT) -> Option<Json<String>> {
+pub fn delete_post_like(user_id: Uuid, post_id: Uuid, _jwt: Auth) -> Option<Json<String>> {
     let mut connection = PostgresConnection::new();
     let _ = delete(
         post_likes.filter(
@@ -108,7 +108,7 @@ pub fn comment_is_liked_by_user(user_id: Uuid, comment_id: Uuid) -> Json<bool> {
 }
 
 #[post("/users/<user_id>/comment_likes/<comment_id>")]
-pub fn like_comment(user_id: Uuid, comment_id: Uuid, _jwt: JWT) -> Option<Json<String>> {
+pub fn like_comment(user_id: Uuid, comment_id: Uuid, _jwt: Auth) -> Option<Json<String>> {
     let mut connection = PostgresConnection::new();
     let comment_like_struct = NewCommentLike {
         user_id,
@@ -122,7 +122,7 @@ pub fn like_comment(user_id: Uuid, comment_id: Uuid, _jwt: JWT) -> Option<Json<S
 }
 
 #[delete("/users/<user_id>/comment_likes/<comment_id>")]
-pub fn delete_comment_like(user_id: Uuid, comment_id: Uuid, _jwt: JWT) -> Option<Json<String>> {
+pub fn delete_comment_like(user_id: Uuid, comment_id: Uuid, _jwt: Auth) -> Option<Json<String>> {
     let mut connection = PostgresConnection::new();
     let _ = delete(
         comment_likes.filter(

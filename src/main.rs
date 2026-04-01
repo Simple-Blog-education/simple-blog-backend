@@ -2,7 +2,7 @@ pub mod db;
 pub mod routes;
 pub mod schema;
 pub mod services;
-use crate::routes::cors::cors_fairing;
+use crate::{db::repos::user_repository::UserRepository, routes::cors::cors_fairing, services::user_service::UserService};
 use routes::{auth_routes, comment_routes, index::index, like_routes, post_routes, user_routes};
 
 #[macro_use]
@@ -12,12 +12,18 @@ extern crate rocket;
 fn rocket() -> _ {
     let database_url = db::db_connection::DbPoolManager::get_database_url_from_dotenv();
     let pool = db::db_connection::DbPoolManager::init_pool(database_url.as_str());
-    rocket::build().manage(pool).attach(cors_fairing()).mount(
+    let user_repo = UserRepository::new(pool.clone());
+    let user_service = UserService::new(user_repo);
+    rocket::build()
+    .manage(pool)
+    .manage(user_service)
+    .attach(cors_fairing())
+    .mount(
         "/api/v1",
         routes![
             index,
-            auth_routes::user_new,
-            auth_routes::login,
+            auth_routes::sign_in,
+            auth_routes::sign_up,
             user_routes::get_user,
             user_routes::user_all,
             user_routes::delete_user,

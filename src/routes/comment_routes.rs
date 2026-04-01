@@ -1,4 +1,4 @@
-use crate::routes::jwt::JWT;
+use crate::routes::jwt::{Auth};
 use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::db::models::comment_models::{Comment, CommentChangeset, NewComment};
 use crate::schema::comments::dsl::comments;
@@ -33,7 +33,7 @@ pub fn get_comments_user(user_id: Uuid) -> Json<Vec<Comment>> {
 }
 
 #[put("/comments/<id>", format = "json", data = "<comment>")]
-pub fn put_comment(id: Uuid, comment: Json<CommentChangeset>, _jwt: JWT) -> Option<Json<Comment>> {
+pub fn put_comment(id: Uuid, comment: Json<CommentChangeset>, _jwt: Auth) -> Option<Json<Comment>> {
     let mut connection = PostgresConnection::new();
     let result = update(comments.find(id))
         .set(comment.into_inner())
@@ -44,7 +44,7 @@ pub fn put_comment(id: Uuid, comment: Json<CommentChangeset>, _jwt: JWT) -> Opti
 }
 
 #[post("/comments/new", format = "json", data = "<comment>")]
-pub fn post_comment(comment: Json<NewComment<'_>>, _jwt: JWT) -> Json<String> {
+pub fn post_comment(comment: Json<NewComment<'_>>, _jwt: Auth) -> Json<String> {
     let mut connection = PostgresConnection::new();
     let _ = insert_into(comments)
         .values(comment.into_inner())
@@ -54,7 +54,7 @@ pub fn post_comment(comment: Json<NewComment<'_>>, _jwt: JWT) -> Json<String> {
 }
 
 #[delete("/comments/<id>")]
-pub fn delete_comment(id: Uuid, _jwt: JWT) -> Option<Json<String>> {
+pub fn delete_comment(id: Uuid, _jwt: Auth) -> Option<Json<String>> {
     let mut connection = PostgresConnection::new();
     let _ = delete(comments.filter(comments_id.eq(id))).execute(&mut connection);
     Some(Json("Success".to_string()))

@@ -1,6 +1,6 @@
-use crate::routes::jwt::JWT;
 use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::db::models::post_models::{NewPost, Post, PostChangeset};
+use crate::routes::jwt::Auth;
 use crate::schema::posts::dsl::posts;
 use crate::schema::posts::edit_date;
 use diesel::dsl::{delete, now, update};
@@ -9,7 +9,7 @@ use rocket::serde::json::Json;
 use uuid::Uuid;
 
 #[get("/posts/all")]
-pub fn get_all_posts(_token: JWT) -> Json<Vec<Post>> {
+pub fn get_all_posts(_token: Auth) -> Json<Vec<Post>> {
     let mut connection = PostgresConnection::new();
     let posts_result = posts
         .limit(50)
@@ -31,7 +31,7 @@ pub fn get_post(id: Uuid) -> Option<Json<Post>> {
 }
 
 #[post("/posts/new", format = "json", data = "<post>")]
-pub fn post_post(post: Json<NewPost<'_>>, _jwt: JWT) -> String {
+pub fn post_post(post: Json<NewPost<'_>>, _jwt: Auth) -> String {
     let mut connection = PostgresConnection::new();
     let _ = insert_into(posts)
         .values(post.into_inner())
@@ -41,7 +41,7 @@ pub fn post_post(post: Json<NewPost<'_>>, _jwt: JWT) -> String {
 }
 
 #[put("/posts/<id>", format = "json", data = "<post>")]
-pub fn put_post(id: Uuid, post: Json<PostChangeset>, _jwt: JWT) -> Option<Json<Post>> {
+pub fn put_post(id: Uuid, post: Json<PostChangeset>, _jwt: Auth) -> Option<Json<Post>> {
     let mut connection = PostgresConnection::new();
     let updated_post = update(posts.find(id))
         .set((post.into_inner(), edit_date.eq(now)))
@@ -52,7 +52,7 @@ pub fn put_post(id: Uuid, post: Json<PostChangeset>, _jwt: JWT) -> Option<Json<P
 }
 
 #[delete("/posts/<id>")]
-pub fn delete_post(id: Uuid, _jwt: JWT) -> Option<String> {
+pub fn delete_post(id: Uuid, _jwt: Auth) -> Option<String> {
     let mut connection = PostgresConnection::new();
     let _ = delete(posts.find(id))
         .execute(&mut connection)
