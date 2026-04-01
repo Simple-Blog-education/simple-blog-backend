@@ -27,7 +27,7 @@ pub fn sign_in(data: Json<LoginCredentials>) -> Result<Json<String>, Json<String
 }
 
 #[post("/auth/signup", format = "json", data = "<data>")]
-pub fn sign_up(data: Json<NewUser<'_>>) -> Json<String> {
+pub fn sign_up(data: Json<NewUser>) -> Json<String> {
     let mut connection = PostgresConnection::new();
     let _ = insert_into(users_dsl)
         .values(data.into_inner())

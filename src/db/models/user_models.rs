@@ -17,12 +17,12 @@ pub struct User {
 
 #[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
-pub struct NewUser<'a> {
-    pub username: &'a str,
-    pub password: &'a str,
-    pub email: &'a str,
-    pub first_name: Option<&'a str>,
-    pub last_name: Option<&'a str>,
+pub struct NewUser {
+    pub username: String,
+    pub password: String,
+    pub email: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }
 
 #[derive(AsChangeset, Deserialize)]
@@ -34,7 +34,9 @@ pub struct UserChangeset {
     pub email: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Debug, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct LoginCredentials {
     pub username: String,
     pub password: String

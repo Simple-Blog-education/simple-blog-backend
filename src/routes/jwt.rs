@@ -1,11 +1,11 @@
-use std::{env, fmt::Display};
-
+use std::env;
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use dotenvy::dotenv;
 use hmac::{Hmac, Mac};
 use rocket::{Request, http::Status, request::{FromRequest, Outcome}};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
+use thiserror::Error;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -107,21 +107,14 @@ impl JWT {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum JWTError {
+    #[error("JWT token missing")]
     Missing,
+    #[error("JWT token invalid")]
     Invalid,
+    #[error("JWT bad format")]
     BadFormat
-}
-
-impl Display for JWTError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            JWTError::Missing => write!(f, "JWT Token missing!"),
-            JWTError::BadFormat => write!(f, "Bad JWT format!"),
-            JWTError::Invalid => write!(f, "JWT token is invalid")
-        }
-    }
 }
 
 pub struct Auth(pub String);

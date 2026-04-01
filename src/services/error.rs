@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::db::repos::error::RepositoryError;
+use crate::{db::repos::error::RepositoryError, routes::jwt::JWTError};
 
 #[derive(Debug, Error)]
 pub enum ServiceError {
@@ -15,7 +15,11 @@ pub enum ServiceError {
         #[from]
         source: RepositoryError,
     },
-
+    #[error("JWT error")]
+    JWT {
+        #[from]
+        source: JWTError,
+    },
     #[error("Internal server error")]
     Internal
 }
