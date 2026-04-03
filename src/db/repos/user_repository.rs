@@ -10,6 +10,8 @@ use crate::schema::users::dsl::username as table_username;
 use crate::schema::users::dsl::role as table_role;
 use diesel::{insert_into, prelude::*};
 use uuid::Uuid;
+
+#[derive(Clone)]
 pub struct UserRepository {
     pool: DbPool
 }
