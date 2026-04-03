@@ -1,61 +1,68 @@
-use crate::db::db_connection::{DBConnection, PostgresConnection};
 use crate::db::models::post_models::{NewPost, Post, PostChangeset};
 use crate::routes::jwt::Auth;
-use crate::schema::posts::dsl::posts;
-use crate::schema::posts::edit_date;
-use diesel::dsl::{delete, now, update};
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use crate::services::error::ServiceError;
+use crate::services::post_service::PostService;
+use rocket::State;
+use rocket::http::Status;
 use rocket::serde::json::Json;
 use uuid::Uuid;
 
 #[get("/posts/all")]
-pub fn get_all_posts(_token: Auth) -> Json<Vec<Post>> {
-    let mut connection = PostgresConnection::new();
-    let posts_result = posts
-        .limit(50)
-        .select(Post::as_select())
-        .load(&mut connection)
-        .expect("Error loading posts");
-    Json(posts_result)
+pub async fn get_all_posts(service: &State<PostService>) -> Result<Json<Vec<Post>>, (Status, Json<String>)> {
+    match service.get_all_posts(50).await {
+        Ok(posts) => Ok(Json(posts)),
+        Err(e) => {
+            eprintln!("Error loading posts: {}", e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 
 #[get("/posts/<id>")]
-pub fn get_post(id: Uuid) -> Option<Json<Post>> {
-    let mut connection = PostgresConnection::new();
-    let post_result = posts
-        .find(id)
-        .select(Post::as_select())
-        .first(&mut connection)
-        .expect("Error loading post");
-    Some(Json(post_result))
+pub async fn get_post_by_id(id: Uuid, service: &State<PostService>) -> Result<Json<Post>, (Status, Json<String>)> {
+    match service.get_post_by_id(id).await {
+        Ok(post) => Ok(Json(post)),
+        Err(ServiceError::NotFound) => Err((Status::NotFound, format!("Post with id {} not found", id).into())),
+        Err(e) => {
+            eprintln!("Error loading post with id {}: {}", id, e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 
 #[post("/posts/new", format = "json", data = "<post>")]
-pub fn post_post(post: Json<NewPost<'_>>, _jwt: Auth) -> String {
-    let mut connection = PostgresConnection::new();
-    let _ = insert_into(posts)
-        .values(post.into_inner())
-        .execute(&mut connection)
-        .expect("Error saving post");
-    "Success".to_string()
+pub async fn create_post(post: Json<NewPost>, _jwt: Auth, service: &State<PostService>) -> Result<Json<String>, (Status, Json<String>)> {
+    match service.create_post(post.into_inner()).await {
+        Ok(inserted) => Ok(Json(format!("Inserted {} posts", inserted).into())),
+        Err(e) => {
+            eprintln!("Error creating post: {}", e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 
 #[put("/posts/<id>", format = "json", data = "<post>")]
-pub fn put_post(id: Uuid, post: Json<PostChangeset>, _jwt: Auth) -> Option<Json<Post>> {
-    let mut connection = PostgresConnection::new();
-    let updated_post = update(posts.find(id))
-        .set((post.into_inner(), edit_date.eq(now)))
-        .returning(Post::as_select())
-        .get_result(&mut connection)
-        .expect("Error updating post");
-    Some(Json(updated_post))
+pub async fn put_post(id: Uuid, post: Json<PostChangeset>, _jwt: Auth, service: &State<PostService>) -> Result<Json<Post>, (Status, Json<String>)> {
+    match service.put_post(id, post.into_inner()).await {
+        Ok(changed_post) => Ok(Json(changed_post)),
+        Err(ServiceError::NotFound) => Err((Status::NotFound, format!("Post with id {} not found", id).into())),
+        Err(e) => {
+            eprintln!("Error editing post with id {}: {}", id, e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }
 
 #[delete("/posts/<id>")]
-pub fn delete_post(id: Uuid, _jwt: Auth) -> Option<String> {
-    let mut connection = PostgresConnection::new();
-    let _ = delete(posts.find(id))
-        .execute(&mut connection)
-        .expect("Error deleting post");
-    Some("Success".to_string())
+pub async fn delete_post(id: Uuid, _jwt: Auth, service: &State<PostService>) -> Result<Status, (Status, Json<String>)> {
+    match service.delete_post(id).await {
+        Ok(is_deleted) => match is_deleted {
+            true => Ok(Status::NoContent),
+            false => Err((Status::NotFound, Json(format!("Post with id {} not found!", id))))
+        },
+        Err(e) => {
+            eprintln!("Error loading user with id: {}: {}", id, e);
+            Err((Status::InternalServerError, Json("Internal server error".into())))
+        }
+    }
 }

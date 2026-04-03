@@ -10,7 +10,5 @@ pub enum RepositoryError {
     #[error("Connection pool error: {0}")]
     Pool(#[from] PoolError),
     #[error("Task join error: {0}")]
-    Join(#[from] JoinError),
-    #[error("Delete error: {reason}")]
-    Delete { reason: String }
+    Join(#[from] JoinError)
 }

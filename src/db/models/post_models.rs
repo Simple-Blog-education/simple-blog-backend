@@ -17,10 +17,10 @@ pub struct Post {
 
 #[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::posts)]
-pub struct NewPost<'a> {
+pub struct NewPost {
     pub user_id: Uuid,
-    pub header: &'a str,
-    pub text: &'a str,
+    pub header: String,
+    pub text: String,
 }
 
 #[derive(AsChangeset, Deserialize)]
