@@ -44,8 +44,10 @@ pub async fn put_user(id: Uuid, data: Json<UserChangeset>, _token: Auth, service
 #[delete("/users/<id>")]
 pub async fn delete_user(id: Uuid, _jwt: Auth, service: &State<UserService>) -> Result<Status, (Status, Json<String>)> {
     match service.delete_user(id).await {
-        Ok(_msg) => Ok(Status::NoContent),
-        Err(ServiceError::NotFound) => Err((Status::NotFound, Json(format!("User with id {} not found", id).into()))),
+        Ok(msg) => match msg {
+            true => Ok(Status::NoContent),
+            false => Err((Status::NotFound, Json(format!("User with id {} not found", id).into())))
+        }
         Err(e) => {
             eprintln!("Error loading user with id: {}: {}", id, e);
             Err((Status::InternalServerError, Json("Internal server error".into())))

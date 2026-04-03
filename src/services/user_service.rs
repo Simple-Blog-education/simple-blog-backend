@@ -35,11 +35,10 @@ impl UserService {
         Ok(updated)
     }
 
-    pub async fn delete_user(&self, user_id: Uuid) -> Result<String, ServiceError> {
+    pub async fn delete_user(&self, user_id: Uuid) -> Result<bool, ServiceError> {
         let success = self.repo.delete_user(user_id)
         .await
-        .map_err(ServiceError::from)?
-        .ok_or(ServiceError::NotFound)?;
+        .map_err(ServiceError::from)?;
         Ok(success)
     }
 }
