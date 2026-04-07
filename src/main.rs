@@ -7,6 +7,8 @@ use services::{auth_service::AuthService, post_service::PostService, user_servic
 use db::repos::{post_repository::PostRepository, user_repository::UserRepository};
 use routes::{auth_routes, comment_routes, index::index, like_routes, post_routes, user_routes};
 
+use crate::{db::repos::comment_repository::CommentRepository, services::comment_service::CommentService};
+
 #[macro_use]
 extern crate rocket;
 
@@ -22,11 +24,15 @@ fn rocket() -> _ {
     let post_repo = PostRepository::new(pool.clone());
     let post_service = PostService::new(post_repo);
 
+    let comment_repo = CommentRepository::new(pool.clone());
+    let comment_service = CommentService::new(comment_repo);
+
     rocket::build()
     .manage(pool)
     .manage(user_service)
     .manage(auth_service)
     .manage(post_service)
+    .manage(comment_service)
     .attach(cors_fairing())
     .mount(
         "/api/v1",

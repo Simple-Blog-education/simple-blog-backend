@@ -15,10 +15,10 @@ pub struct Comment {
 #[derive(Insertable, Deserialize)]
 #[diesel(table_name = crate::schema::comments)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct NewComment<'a> {
+pub struct NewComment {
     pub post_id: Uuid,
     pub user_id: Uuid,
-    pub text: &'a str,
+    pub text: String,
 }
 
 #[derive(AsChangeset, Deserialize)]
