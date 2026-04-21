@@ -30,65 +30,6 @@ pub fn get_comment_likes(comment_id: Uuid) -> Json<Vec<User>> {
     Json(result)
 }
 
-#[get("/likes/posts/<post_id>")]
-pub fn get_post_likes(post_id: Uuid) -> Json<Vec<User>> {
-    let mut connection = PostgresConnection::new();
-    let likes = post_likes
-        .select(PostLike::as_select())
-        .filter(post_likes_post_id.eq(post_id))
-        .load(&mut connection)
-        .expect("Error loading likes");
-    let mut result: Vec<User> = vec![];
-    for like in likes.iter() {
-        // result.push(get_user(like.user_id).unwrap().into_inner());
-    }
-    Json(result)
-}
-
-#[get("/users/<user_id>/post_likes/<post_id>")]
-pub fn post_is_liked_by_user(user_id: Uuid, post_id: Uuid) -> Json<bool> {
-    let mut connection = PostgresConnection::new();
-    let liked = post_likes
-        .select(PostLike::as_select())
-        .filter(
-            post_likes_user_id
-                .eq(user_id)
-                .and(post_likes_post_id.eq(post_id)),
-        )
-        .load(&mut connection)
-        .expect("Error loading likes");
-    if liked.is_empty() {
-        return Json(false);
-    }
-    Json(true)
-}
-
-#[post("/users/<user_id>/post_likes/<post_id>")]
-pub fn like_post(user_id: Uuid, post_id: Uuid, _jwt: Auth) -> Option<Json<String>> {
-    let mut connection = PostgresConnection::new();
-    let post_like_struct = PostLike { user_id, post_id };
-    let _ = insert_into(post_likes)
-        .values(post_like_struct)
-        .execute(&mut connection)
-        .expect("Error updating post");
-    Some(Json("Success".to_string()))
-}
-
-#[delete("/users/<user_id>/post_likes/<post_id>")]
-pub fn delete_post_like(user_id: Uuid, post_id: Uuid, _jwt: Auth) -> Option<Json<String>> {
-    let mut connection = PostgresConnection::new();
-    let _ = delete(
-        post_likes.filter(
-            post_likes_user_id
-                .eq(user_id)
-                .and(post_likes_post_id.eq(post_id)),
-        ),
-    )
-    .execute(&mut connection)
-    .expect("Error deleting post");
-    Some(Json("Success".to_string()))
-}
-
 #[get("/users/<user_id>/comment_likes/<comment_id>")]
 pub fn comment_is_liked_by_user(user_id: Uuid, comment_id: Uuid) -> Json<bool> {
     let mut connection = PostgresConnection::new();

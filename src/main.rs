@@ -5,9 +5,9 @@ pub mod services;
 use routes::cors::cors_fairing;
 use services::{auth_service::AuthService, post_service::PostService, user_service::UserService};
 use db::repos::{post_repository::PostRepository, user_repository::UserRepository};
-use routes::{auth_routes, comment_routes, index::index, like_routes, post_routes, user_routes};
+use routes::{auth_routes, comment_routes, index::index, like_routes, post_routes, user_routes, post_like_routes};
 
-use crate::{db::repos::comment_repository::CommentRepository, services::comment_service::CommentService};
+use crate::{db::repos::{comment_repository::CommentRepository, post_like_repository::PostLikeRepository}, services::{comment_service::CommentService, post_like_service::PostLikeService}};
 
 #[macro_use]
 extern crate rocket;
@@ -27,12 +27,16 @@ fn rocket() -> _ {
     let comment_repo = CommentRepository::new(pool.clone());
     let comment_service = CommentService::new(comment_repo);
 
+    let post_like_repo = PostLikeRepository::new(pool.clone());
+    let post_like_service = PostLikeService::new(post_like_repo);
+
     rocket::build()
     .manage(pool)
     .manage(user_service)
     .manage(auth_service)
     .manage(post_service)
     .manage(comment_service)
+    .manage(post_like_service)
     .attach(cors_fairing())
     .mount(
         "/api/v1",
@@ -58,10 +62,10 @@ fn rocket() -> _ {
             like_routes::comment_is_liked_by_user,
             like_routes::like_comment,
             like_routes::delete_comment_like,
-            like_routes::get_post_likes,
-            like_routes::post_is_liked_by_user,
-            like_routes::like_post,
-            like_routes::delete_post_like
+            post_like_routes::get_post_likes,
+            post_like_routes::post_is_liked_by_user,
+            post_like_routes::like_post,
+            post_like_routes::unlike_post
         ],
     )
 }

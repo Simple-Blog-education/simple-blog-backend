@@ -24,14 +24,14 @@ impl PostLikeRepository {
         Self { pool }
     }
 
-    pub async fn like(&self, user_id: Uuid, post_id: Uuid) -> Result<Option<usize>, RepositoryError> {
+    pub async fn like(&self, user_id: Uuid, post_id: Uuid) -> Result<bool, RepositoryError> {
         self.run_blocking(move |conn| {
             let post_like_struct = PostLike { user_id, post_id };
-            insert_into(post_likes)
+            let inserted_rows = insert_into(post_likes)
             .values(post_like_struct)
             .execute(conn)
-            .optional()
-            .map_err(RepositoryError::from)
+            .map_err(RepositoryError::from)?;
+            Ok(inserted_rows == 1)
         })
         .await
     }
