@@ -4,7 +4,7 @@ use crate::schema::post_likes::dsl::post_likes;
 use crate::schema::post_likes::{post_id as post_likes_post_id, user_id as post_likes_user_id};
 use diesel::dsl::delete;
 use diesel::{
-    BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, insert_into
+    BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl, insert_into
 };
 use crate::db::{db_connection::DbPool, repos::{error::RepositoryError, helpers::DieselRepository}};
 
