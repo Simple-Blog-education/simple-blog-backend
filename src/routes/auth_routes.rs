@@ -1,11 +1,11 @@
 use rocket::State;
 use rocket::http::Status;
-use crate::db::models::user_models::{LoginCredentials, NewUser};
+use crate::db::models::user_models::{LoginCredentials, LoginData, NewUser};
 use crate::services::auth_service::AuthService;
 use rocket::serde::json::Json;
 
 #[post("/auth/login", format = "json", data = "<data>")]
-pub async fn sign_in(data: Json<LoginCredentials>, service: &State<AuthService>) -> Result<Json<String>, (Status, Json<String>)> {
+pub async fn sign_in(data: Json<LoginCredentials>, service: &State<AuthService>) -> Result<Json<LoginData>, (Status, Json<String>)> {
     match service.sign_in(data.into_inner()).await {
         Ok(token) => Ok(Json(token)),
         Err(e) => {

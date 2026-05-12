@@ -12,7 +12,8 @@ pub struct User {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub reg_date: DateTime<Utc>
+    pub reg_date: DateTime<Utc>,
+    pub role: String
 }
 
 #[derive(Insertable, Deserialize)]
@@ -39,5 +40,11 @@ pub struct UserChangeset {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct LoginCredentials {
     pub username: String,
-    pub password: String
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoginData {
+    pub user_id: String,
+    pub token: String
 }

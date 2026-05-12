@@ -7,6 +7,7 @@ use crate::db::{db_connection::DbPool, models::user_models::User};
 use crate::schema::users::dsl::users;
 use crate::schema::users::dsl::username as table_username;
 use crate::schema::users::dsl::role as table_role;
+use crate::schema::users::id;
 use diesel::{insert_into, prelude::*};
 use uuid::Uuid;
 
@@ -41,6 +42,16 @@ impl UserRepository {
         self.run_blocking(move |conn| {
             users.filter(table_username.eq(username))
             .select(LoginCredentials::as_select())
+            .first(conn)
+            .optional()
+            .map_err(RepositoryError::from)
+        }).await
+    }
+
+    pub async fn get_id_by_username(&self, username: String) -> Result<Option<Uuid>, RepositoryError> {
+        self.run_blocking(move |conn| {
+            users.filter(table_username.eq(username))
+            .select(id)
             .first(conn)
             .optional()
             .map_err(RepositoryError::from)

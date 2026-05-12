@@ -2,7 +2,7 @@ use crate::db::models::user_role::UserRole;
 use crate::services::error::ServiceError;
 use crate::routes::jwt::{Claims, JWT, TokenType, get_default_secret};
 use crate::db::repos::user_repository::UserRepository;
-use crate::db::models::user_models::{LoginCredentials, NewUser};
+use crate::db::models::user_models::{LoginCredentials, LoginData, NewUser};
 
 pub struct AuthService {
     repo: UserRepository
@@ -21,15 +21,20 @@ impl AuthService {
         Ok(inserted)
     }
 
-    pub async fn sign_in(&self, credentials: LoginCredentials) -> Result<String, ServiceError> {
-        let user = self.repo.get_credentials_by_username(credentials.username)
+    pub async fn sign_in(&self, credentials: LoginCredentials) -> Result<LoginData, ServiceError> {
+        let user = self.repo.get_credentials_by_username(credentials.username.clone())
         .await
         .map_err(ServiceError::from)?
         .ok_or(ServiceError::NotFound)?;
         if user.password == credentials.password {
+            let id = self.repo.get_id_by_username(credentials.username).await.map_err(ServiceError::from)?.ok_or(ServiceError::NotFound)?;
             let claims = Claims::new(user.username, TokenType::Auth);
             let token = JWT::make_token(&claims, get_default_secret()).map_err(ServiceError::from)?;
-            Ok(token)
+            let login_data = LoginData {
+                user_id: id.to_string(),
+                token: token
+            };
+            Ok(login_data)
         }
         else {
             Err(ServiceError::Validation { reason: "Invalid password".to_string() })
