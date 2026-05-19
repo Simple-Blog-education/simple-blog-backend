@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -10,6 +11,7 @@ pub struct Comment {
     pub post_id: Uuid,
     pub user_id: Uuid,
     pub text: String,
+    pub create_date: DateTime<Utc>,
 }
 
 #[derive(Insertable, Deserialize)]

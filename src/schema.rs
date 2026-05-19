@@ -13,6 +13,7 @@ diesel::table! {
         post_id -> Uuid,
         user_id -> Uuid,
         text -> Varchar,
+        create_date -> Timestamptz,
     }
 }
 

@@ -1,0 +1,3 @@
+-- Your SQL goes here
+ALTER TABLE comments
+ADD create_date TIMESTAMP WITH TIME ZONE NOT NULL default CURRENT_TIMESTAMP;
