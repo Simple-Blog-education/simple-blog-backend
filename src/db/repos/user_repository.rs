@@ -141,33 +141,31 @@ impl UserRepository {
         .await
     }
 
-    pub async fn check_password(
+    pub async fn get_password_hash(
         &self,
         username: String,
-        password: String,
-    ) -> Result<bool, RepositoryError> {
+    ) -> Result<Option<String>, RepositoryError> {
         self.run_blocking(move |conn| {
-            let actual_password = users
+            let hash = users
                 .filter(table_username.eq(username))
                 .select(table_password)
-                .load::<String>(conn)
-                .map_err(RepositoryError::from)?;
-            Ok(password == actual_password[0])
+                .first(conn)
+                .optional()?;
+            Ok(hash)
         })
         .await
     }
 
-    pub async fn change_password(
+    pub async fn update_password_hash(
         &self,
         username: String,
-        password: String,
+        new_hash: String,
     ) -> Result<bool, RepositoryError> {
         self.run_blocking(move |conn| {
-            let success = update(users.filter(table_username.eq(username)))
-                .set(table_password.eq(password))
-                .execute(conn)
-                .map_err(RepositoryError::from)?;
-            Ok(success == 1)
+            let updated = update(users.filter(table_username.eq(username)))
+                .set(table_password.eq(new_hash))
+                .execute(conn)?;
+            Ok(updated == 1)
         })
         .await
     }

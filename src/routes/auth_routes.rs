@@ -3,6 +3,7 @@ use crate::db::models::user_models::{
 };
 use crate::routes::jwt::Auth;
 use crate::services::auth_service::AuthService;
+use crate::services::error::ServiceError;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -68,11 +69,17 @@ pub async fn change_password(
     let username = jwt.0;
     match service.change_password(username, data.0).await {
         Ok(success) => Ok(Json(success)),
+        Err(ServiceError::InvalidOldPassword) => Err((
+            Status::Unauthorized,
+            Json("Old password is incorrect".into()),
+        )),
+        Err(ServiceError::Validation { reason }) => Err((Status::BadRequest, Json(reason))),
+        Err(ServiceError::NotFound) => Err((Status::NotFound, Json("User not found".into()))),
         Err(e) => {
-            eprintln!("Error while fetching current user: {}", e);
+            eprintln!("Error changing password: {}", e);
             Err((
                 Status::InternalServerError,
-                Json("Internal Server Error".to_string()),
+                Json("Internal server error".into()),
             ))
         }
     }

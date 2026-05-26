@@ -1,4 +1,6 @@
+use bcrypt::{hash, DEFAULT_COST};
+
 #[get("/")]
-pub fn index() -> &'static str {
+pub async fn index() -> &'static str {
     "Health check!"
 }

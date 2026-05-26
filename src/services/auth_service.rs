@@ -1,3 +1,5 @@
+use bcrypt::{hash, verify, DEFAULT_COST};
+
 use crate::db::models::user_models::{
     LoginCredentials, LoginData, NewUser, PasswordChangeset, User,
 };
@@ -16,9 +18,14 @@ impl AuthService {
     }
 
     pub async fn sign_up(&self, new_user: NewUser) -> Result<usize, ServiceError> {
+        let hashed_password = hash(&new_user.password, DEFAULT_COST)?;
+        let new_user_with_hash = NewUser {
+            password: hashed_password,
+            ..new_user
+        };
         let inserted = self
             .repo
-            .create_user(new_user)
+            .create_user(new_user_with_hash)
             .await
             .map_err(ServiceError::from)?
             .ok_or(ServiceError::Internal)?;
@@ -81,21 +88,39 @@ impl AuthService {
         username: String,
         changeset: PasswordChangeset,
     ) -> Result<bool, ServiceError> {
-        let old_password_is_correct = self
+        let stored_hash = self
             .repo
-            .check_password(username.clone(), changeset.old_password)
+            .get_password_hash(username.clone())
             .await
-            .map_err(ServiceError::from)?;
-        if !old_password_is_correct {
+            .map_err(ServiceError::from)?
+            .ok_or(ServiceError::NotFound)?;
+
+        let old_password_matches =
+            verify(&changeset.old_password, &stored_hash).map_err(ServiceError::Bcrypt)?;
+        if !old_password_matches {
+            return Err(ServiceError::InvalidOldPassword);
+        }
+
+        if changeset.old_password == changeset.new_password {
             return Err(ServiceError::Validation {
-                reason: "Old password is incorrect".to_string(),
+                reason: "New password must be different".into(),
             });
-        };
-        let success = self
+        }
+
+        if changeset.new_password.len() < 8 {
+            return Err(ServiceError::Validation {
+                reason: "Password too short".into(),
+            });
+        }
+
+        let new_hash = hash(changeset.new_password, DEFAULT_COST).map_err(ServiceError::Bcrypt)?;
+
+        let updated = self
             .repo
-            .change_password(username, changeset.new_password)
+            .update_password_hash(username, new_hash)
             .await
             .map_err(ServiceError::from)?;
-        Ok(success)
+
+        Ok(updated)
     }
 }
