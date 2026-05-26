@@ -13,7 +13,7 @@ pub struct User {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub reg_date: DateTime<Utc>,
-    pub role: String
+    pub role: String,
 }
 
 #[derive(Insertable, Deserialize)]
@@ -46,5 +46,11 @@ pub struct LoginCredentials {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoginData {
     pub user_id: String,
-    pub token: String
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PasswordChangeset {
+    pub old_password: String,
+    pub new_password: String,
 }

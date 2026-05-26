@@ -61,6 +61,7 @@ fn rocket() -> _ {
                 auth_routes::sign_in,
                 auth_routes::sign_up,
                 auth_routes::get_current_user,
+                auth_routes::change_password,
                 user_routes::get_user_by_id,
                 user_routes::get_user_by_username,
                 user_routes::user_all,

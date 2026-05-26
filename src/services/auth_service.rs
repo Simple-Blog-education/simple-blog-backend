@@ -1,4 +1,6 @@
-use crate::db::models::user_models::{LoginCredentials, LoginData, NewUser, User};
+use crate::db::models::user_models::{
+    LoginCredentials, LoginData, NewUser, PasswordChangeset, User,
+};
 use crate::db::models::user_role::UserRole;
 use crate::db::repos::user_repository::UserRepository;
 use crate::routes::jwt::{get_default_secret, Claims, TokenType, JWT};
@@ -73,5 +75,27 @@ impl AuthService {
             .map_err(ServiceError::from)?
             .ok_or(ServiceError::NotFound)?;
         Ok(user)
+    }
+    pub async fn change_password(
+        &self,
+        username: String,
+        changeset: PasswordChangeset,
+    ) -> Result<bool, ServiceError> {
+        let old_password_is_correct = self
+            .repo
+            .check_password(username.clone(), changeset.old_password)
+            .await
+            .map_err(ServiceError::from)?;
+        if !old_password_is_correct {
+            return Err(ServiceError::Validation {
+                reason: "Old password is incorrect".to_string(),
+            });
+        };
+        let success = self
+            .repo
+            .change_password(username, changeset.new_password)
+            .await
+            .map_err(ServiceError::from)?;
+        Ok(success)
     }
 }

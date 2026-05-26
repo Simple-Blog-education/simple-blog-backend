@@ -1,4 +1,6 @@
-use crate::db::models::user_models::{LoginCredentials, LoginData, NewUser, User};
+use crate::db::models::user_models::{
+    LoginCredentials, LoginData, NewUser, PasswordChangeset, User,
+};
 use crate::routes::jwt::Auth;
 use crate::services::auth_service::AuthService;
 use rocket::http::Status;
@@ -47,6 +49,25 @@ pub async fn get_current_user(
     let username = jwt.0;
     match service.get_current_user(username).await {
         Ok(user) => Ok(Json(user)),
+        Err(e) => {
+            eprintln!("Error while fetching current user: {}", e);
+            Err((
+                Status::InternalServerError,
+                Json("Internal Server Error".to_string()),
+            ))
+        }
+    }
+}
+
+#[put("/auth/change_password", format = "json", data = "<data>")]
+pub async fn change_password(
+    data: Json<PasswordChangeset>,
+    jwt: Auth,
+    service: &State<AuthService>,
+) -> Result<Json<bool>, (Status, Json<String>)> {
+    let username = jwt.0;
+    match service.change_password(username, data.0).await {
+        Ok(success) => Ok(Json(success)),
         Err(e) => {
             eprintln!("Error while fetching current user: {}", e);
             Err((
