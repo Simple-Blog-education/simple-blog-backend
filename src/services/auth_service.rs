@@ -39,7 +39,8 @@ impl AuthService {
             .await
             .map_err(ServiceError::from)?
             .ok_or(ServiceError::NotFound)?;
-        if user.password == credentials.password {
+        let password_matches = verify(credentials.password, &user.password)?;
+        if password_matches {
             let id = self
                 .repo
                 .get_id_by_username(credentials.username)
