@@ -12,7 +12,7 @@ use uuid::Uuid;
 #[derive(FromForm)]
 pub struct PostSearchParams {
     pub query: Option<String>,
-    #[field(default = 0)]
+    #[field(default = 1)]
     pub page: i64,
     #[field(default = 10)]
     pub per_page: i64,
