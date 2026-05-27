@@ -8,7 +8,6 @@ use crate::schema::users::dsl::username as table_username;
 use crate::schema::users::dsl::users;
 use crate::schema::users::id;
 use crate::schema::users::password as table_password;
-use diesel::associations::HasTable;
 use diesel::dsl::{delete, update};
 use diesel::{insert_into, prelude::*};
 use uuid::Uuid;

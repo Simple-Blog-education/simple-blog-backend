@@ -1,7 +1,9 @@
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::db::models::{post_models::Post, user_models::User};
 
+#[derive(Serialize)]
 pub struct PostResponse {
     pub id: Uuid,
     pub header: String,
@@ -13,7 +15,7 @@ pub struct PostResponse {
 }
 
 impl PostResponse {
-    fn from_post(p: Post, u: User) -> Self {
+    pub fn from_post(p: Post, u: User) -> Self {
         let author_name = match (u.first_name.as_deref(), u.last_name.as_deref()) {
             (Some(first), Some(last)) => Some(format!("{} {}", first, last)),
             (Some(name), None) | (None, Some(name)) => Some(name.to_string()),

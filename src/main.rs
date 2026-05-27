@@ -68,7 +68,7 @@ fn rocket() -> _ {
                 user_routes::delete_user,
                 user_routes::put_user,
                 post_routes::get_post_by_id,
-                post_routes::get_all_posts,
+                post_routes::search_posts,
                 post_routes::create_post,
                 post_routes::put_post,
                 post_routes::delete_post,
