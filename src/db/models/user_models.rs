@@ -1,22 +1,25 @@
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Queryable, Selectable, QueryableByName, Serialize, Deserialize)]
+use crate::db::dto::user_dto::{SignUpRequest, UpdateProfileRequest};
+
+#[derive(Queryable, Selectable, QueryableByName, Debug)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
     pub username: String,
     pub email: String,
+    #[diesel(column_name = password)]
+    pub password_hash: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub reg_date: DateTime<Utc>,
     pub role: String,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable)]
 #[diesel(table_name = crate::schema::users)]
 pub struct NewUser {
     pub username: String,
@@ -26,31 +29,33 @@ pub struct NewUser {
     pub last_name: Option<String>,
 }
 
-#[derive(AsChangeset, Deserialize)]
+impl From<SignUpRequest> for NewUser {
+    fn from(req: SignUpRequest) -> Self {
+        NewUser {
+            username: req.username,
+            password: req.password,
+            email: req.email,
+            first_name: req.first_name,
+            last_name: req.last_name,
+        }
+    }
+}
+
+#[derive(AsChangeset, Debug)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct UserChangeset {
+pub struct UserProfileChangeset {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub email: Option<String>,
 }
 
-#[derive(Queryable, Selectable, Debug, Serialize, Deserialize)]
-#[diesel(table_name = crate::schema::users)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct LoginCredentials {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LoginData {
-    pub user_id: String,
-    pub token: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PasswordChangeset {
-    pub old_password: String,
-    pub new_password: String,
+impl From<UpdateProfileRequest> for UserProfileChangeset {
+    fn from(req: UpdateProfileRequest) -> Self {
+        UserProfileChangeset {
+            first_name: req.first_name,
+            last_name: req.last_name,
+            email: req.email,
+        }
+    }
 }

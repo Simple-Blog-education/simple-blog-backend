@@ -1,5 +1,5 @@
-use crate::db::models::user_models::{
-    LoginCredentials, LoginData, NewUser, PasswordChangeset, User,
+use crate::db::dto::user_dto::{
+    AuthResponse, ChangePasswordRequest, SignInRequest, SignUpRequest, UserProfileResponse,
 };
 use crate::routes::jwt::Auth;
 use crate::services::auth_service::AuthService;
@@ -10,9 +10,9 @@ use rocket::State;
 
 #[post("/auth/login", format = "json", data = "<data>")]
 pub async fn sign_in(
-    data: Json<LoginCredentials>,
+    data: Json<SignInRequest>,
     service: &State<AuthService>,
-) -> Result<Json<LoginData>, (Status, Json<String>)> {
+) -> Result<Json<AuthResponse>, (Status, Json<String>)> {
     match service.sign_in(data.into_inner()).await {
         Ok(token) => Ok(Json(token)),
         Err(e) => {
@@ -27,11 +27,11 @@ pub async fn sign_in(
 
 #[post("/auth/signup", format = "json", data = "<data>")]
 pub async fn sign_up(
-    data: Json<NewUser>,
+    data: Json<SignUpRequest>,
     service: &State<AuthService>,
-) -> Result<Json<String>, (Status, Json<String>)> {
+) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
     match service.sign_up(data.0).await {
-        Ok(inserted) => Ok(Json(format!("Inserted {} users", inserted))),
+        Ok(user) => Ok(Json(UserProfileResponse::from(user))),
         Err(e) => {
             eprintln!("Error while sign up: {}", e);
             Err((
@@ -46,10 +46,10 @@ pub async fn sign_up(
 pub async fn get_current_user(
     jwt: Auth,
     service: &State<AuthService>,
-) -> Result<Json<User>, (Status, Json<String>)> {
+) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
     let username = jwt.0;
     match service.get_current_user(username).await {
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => Ok(Json(UserProfileResponse::from(user))),
         Err(e) => {
             eprintln!("Error while fetching current user: {}", e);
             Err((
@@ -62,7 +62,7 @@ pub async fn get_current_user(
 
 #[put("/auth/change_password", format = "json", data = "<data>")]
 pub async fn change_password(
-    data: Json<PasswordChangeset>,
+    data: Json<ChangePasswordRequest>,
     jwt: Auth,
     service: &State<AuthService>,
 ) -> Result<Json<bool>, (Status, Json<String>)> {

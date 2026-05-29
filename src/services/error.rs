@@ -1,5 +1,4 @@
 use bcrypt::BcryptError;
-use thiserror::Error;
 
 use crate::{db::repos::error::RepositoryError, routes::jwt::JWTError};
 

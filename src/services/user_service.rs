@@ -2,7 +2,8 @@ use uuid::Uuid;
 
 use crate::{
     db::{
-        models::user_models::{User, UserChangeset},
+        dto::user_dto::UpdateProfileRequest,
+        models::user_models::{User, UserProfileChangeset},
         repos::user_repository::UserRepository,
     },
     services::error::ServiceError,
@@ -42,22 +43,21 @@ impl UserService {
             .repo
             .get_all_users(limit)
             .await
-            .map_err(ServiceError::from)?
-            .ok_or(ServiceError::NotFound)?;
+            .map_err(ServiceError::from)?;
         Ok(users)
     }
 
     pub async fn put_user(
         &self,
         user_id: Uuid,
-        changeset: UserChangeset,
+        changeset: UpdateProfileRequest,
     ) -> Result<User, ServiceError> {
+        let model = UserProfileChangeset::from(changeset);
         let updated = self
             .repo
-            .put_user(user_id, changeset)
+            .update_profile(user_id, model)
             .await
-            .map_err(ServiceError::from)?
-            .ok_or(ServiceError::NotFound)?;
+            .map_err(ServiceError::from)?;
         Ok(updated)
     }
 

@@ -1,8 +1,7 @@
 use bcrypt::{hash, verify, DEFAULT_COST};
 
-use crate::db::models::user_models::{
-    LoginCredentials, LoginData, NewUser, PasswordChangeset, User,
-};
+use crate::db::dto::user_dto::{AuthResponse, ChangePasswordRequest, SignInRequest, SignUpRequest};
+use crate::db::models::user_models::{NewUser, User};
 use crate::db::models::user_role::UserRole;
 use crate::db::repos::user_repository::UserRepository;
 use crate::routes::jwt::{get_default_secret, Claims, TokenType, JWT};
@@ -17,41 +16,35 @@ impl AuthService {
         Self { repo }
     }
 
-    pub async fn sign_up(&self, new_user: NewUser) -> Result<usize, ServiceError> {
+    pub async fn sign_up(&self, new_user: SignUpRequest) -> Result<User, ServiceError> {
+        let new_user = NewUser::from(new_user);
         let hashed_password = hash(&new_user.password, DEFAULT_COST)?;
         let new_user_with_hash = NewUser {
             password: hashed_password,
             ..new_user
         };
-        let inserted = self
+        let user = self
             .repo
             .create_user(new_user_with_hash)
             .await
-            .map_err(ServiceError::from)?
-            .ok_or(ServiceError::Internal)?;
-        Ok(inserted)
+            .map_err(ServiceError::from)?;
+        Ok(user)
     }
 
-    pub async fn sign_in(&self, credentials: LoginCredentials) -> Result<LoginData, ServiceError> {
+    pub async fn sign_in(&self, credentials: SignInRequest) -> Result<AuthResponse, ServiceError> {
         let user = self
             .repo
-            .get_credentials_by_username(credentials.username.clone())
+            .find_by_username(credentials.username.clone())
             .await
             .map_err(ServiceError::from)?
             .ok_or(ServiceError::NotFound)?;
-        let password_matches = verify(credentials.password, &user.password)?;
+        let password_matches = verify(credentials.password, &user.password_hash)?;
         if password_matches {
-            let id = self
-                .repo
-                .get_id_by_username(credentials.username)
-                .await
-                .map_err(ServiceError::from)?
-                .ok_or(ServiceError::NotFound)?;
             let claims = Claims::new(user.username, TokenType::Auth);
             let token =
                 JWT::make_token(&claims, get_default_secret()).map_err(ServiceError::from)?;
-            let login_data = LoginData {
-                user_id: id.to_string(),
+            let login_data = AuthResponse {
+                user_id: user.id,
                 token: token,
             };
             Ok(login_data)
@@ -67,11 +60,13 @@ impl AuthService {
         username: String,
         expected_role: UserRole,
     ) -> Result<bool, ServiceError> {
-        let role = self
+        let user = self
             .repo
-            .get_role_by_username(username)
+            .find_by_username(username)
             .await
-            .map_err(ServiceError::from)?;
+            .map_err(ServiceError::from)?
+            .ok_or(ServiceError::Internal)?;
+        let role = UserRole::from(user.role);
         Ok(role.value() < expected_role.value())
     }
 
@@ -87,17 +82,17 @@ impl AuthService {
     pub async fn change_password(
         &self,
         username: String,
-        changeset: PasswordChangeset,
+        changeset: ChangePasswordRequest,
     ) -> Result<bool, ServiceError> {
-        let stored_hash = self
+        let user = self
             .repo
-            .get_password_hash(username.clone())
+            .find_by_username(username.clone())
             .await
             .map_err(ServiceError::from)?
             .ok_or(ServiceError::NotFound)?;
 
         let old_password_matches =
-            verify(&changeset.old_password, &stored_hash).map_err(ServiceError::Bcrypt)?;
+            verify(&changeset.old_password, &user.password_hash).map_err(ServiceError::Bcrypt)?;
         if !old_password_matches {
             return Err(ServiceError::InvalidOldPassword);
         }

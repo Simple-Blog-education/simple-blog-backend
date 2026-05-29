@@ -1,15 +1,9 @@
-use crate::db::models::user_models::{LoginCredentials, NewUser, UserChangeset};
-use crate::db::models::user_role::UserRole;
+use crate::db::db_connection::DbPool;
+use crate::db::models::user_models::{NewUser, User, UserProfileChangeset};
 use crate::db::repos::error::RepositoryError;
 use crate::db::repos::helpers::DieselRepository;
-use crate::db::{db_connection::DbPool, models::user_models::User};
-use crate::schema::users::dsl::role as table_role;
-use crate::schema::users::dsl::username as table_username;
-use crate::schema::users::dsl::users;
-use crate::schema::users::id;
-use crate::schema::users::password as table_password;
-use diesel::dsl::{delete, update};
-use diesel::{insert_into, prelude::*};
+use crate::schema::users;
+use diesel::prelude::*;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -33,8 +27,8 @@ impl UserRepository {
         username: String,
     ) -> Result<Option<User>, RepositoryError> {
         self.run_blocking(move |conn| {
-            users
-                .filter(table_username.eq(username))
+            users::table
+                .filter(users::username.eq(username))
                 .select(User::as_select())
                 .first(conn)
                 .optional()
@@ -43,55 +37,9 @@ impl UserRepository {
         .await
     }
 
-    pub async fn get_credentials_by_username(
-        &self,
-        username: String,
-    ) -> Result<Option<LoginCredentials>, RepositoryError> {
-        self.run_blocking(move |conn| {
-            users
-                .filter(table_username.eq(username))
-                .select(LoginCredentials::as_select())
-                .first(conn)
-                .optional()
-                .map_err(RepositoryError::from)
-        })
-        .await
-    }
-
-    pub async fn get_id_by_username(
-        &self,
-        username: String,
-    ) -> Result<Option<Uuid>, RepositoryError> {
-        self.run_blocking(move |conn| {
-            users
-                .filter(table_username.eq(username))
-                .select(id)
-                .first(conn)
-                .optional()
-                .map_err(RepositoryError::from)
-        })
-        .await
-    }
-
-    pub async fn get_role_by_username(
-        &self,
-        username: String,
-    ) -> Result<UserRole, RepositoryError> {
-        self.run_blocking(move |conn| {
-            let role = users
-                .filter(table_username.eq(username))
-                .select(table_role)
-                .first::<String>(conn)
-                .optional()
-                .map_err(RepositoryError::from)?;
-            Ok(UserRole::from(role))
-        })
-        .await
-    }
-
     pub async fn find_by_id(&self, user_id: Uuid) -> Result<Option<User>, RepositoryError> {
         self.run_blocking(move |conn| {
-            users
+            users::table
                 .find(user_id)
                 .select(User::as_select())
                 .first(conn)
@@ -101,56 +49,39 @@ impl UserRepository {
         .await
     }
 
-    pub async fn get_all_users(&self, limit: i64) -> Result<Option<Vec<User>>, RepositoryError> {
+    pub async fn get_all_users(&self, limit: i64) -> Result<Vec<User>, RepositoryError> {
         self.run_blocking(move |conn| {
-            users
+            users::table
                 .select(User::as_select())
                 .limit(limit)
                 .load(conn)
-                .optional()
                 .map_err(RepositoryError::from)
         })
         .await
     }
 
-    pub async fn create_user(&self, new_user: NewUser) -> Result<Option<usize>, RepositoryError> {
+    pub async fn create_user(&self, new_user: NewUser) -> Result<User, RepositoryError> {
         self.run_blocking(move |conn| {
-            insert_into(users)
+            diesel::insert_into(users::table)
                 .values(new_user)
-                .execute(conn)
-                .optional()
+                .returning(User::as_select())
+                .get_result(conn)
                 .map_err(RepositoryError::from)
         })
         .await
     }
 
-    pub async fn put_user(
+    pub async fn update_profile(
         &self,
         user_id: Uuid,
-        changeset: UserChangeset,
-    ) -> Result<Option<User>, RepositoryError> {
+        changeset: UserProfileChangeset,
+    ) -> Result<User, RepositoryError> {
         self.run_blocking(move |conn| {
-            update(users.find(user_id))
+            diesel::update(users::table.find(user_id))
                 .set(changeset)
                 .returning(User::as_select())
                 .get_result(conn)
-                .optional()
                 .map_err(RepositoryError::from)
-        })
-        .await
-    }
-
-    pub async fn get_password_hash(
-        &self,
-        username: String,
-    ) -> Result<Option<String>, RepositoryError> {
-        self.run_blocking(move |conn| {
-            let hash = users
-                .filter(table_username.eq(username))
-                .select(table_password)
-                .first(conn)
-                .optional()?;
-            Ok(hash)
         })
         .await
     }
@@ -161,8 +92,8 @@ impl UserRepository {
         new_hash: String,
     ) -> Result<bool, RepositoryError> {
         self.run_blocking(move |conn| {
-            let updated = update(users.filter(table_username.eq(username)))
-                .set(table_password.eq(new_hash))
+            let updated = diesel::update(users::table.filter(users::username.eq(username)))
+                .set(users::password.eq(new_hash))
                 .execute(conn)?;
             Ok(updated == 1)
         })
@@ -171,9 +102,7 @@ impl UserRepository {
 
     pub async fn delete_user(&self, user_id: Uuid) -> Result<bool, RepositoryError> {
         self.run_blocking(move |conn| {
-            let deleted_rows = delete(users.find(user_id))
-                .execute(conn)
-                .map_err(RepositoryError::from)?;
+            let deleted_rows = diesel::delete(users::table.find(user_id)).execute(conn)?;
             Ok(deleted_rows == 1)
         })
         .await
