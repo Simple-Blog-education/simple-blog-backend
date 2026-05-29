@@ -1,4 +1,5 @@
-use crate::db::dto::user_dto::{UpdateProfileRequest, UserProfileResponse};
+use crate::db::dto::user_dto::{UpdateProfileRequest, UserProfileResponse, UserSearchParams};
+use crate::db::dto::PaginatedResponse;
 use crate::routes::jwt::Auth;
 use crate::services::error::ServiceError;
 use crate::services::user_service::UserService;
@@ -7,28 +8,28 @@ use rocket::serde::json::Json;
 use rocket::State;
 use uuid::Uuid;
 
-#[get("/users/all")]
-pub async fn user_all(
-    _jwt: Auth,
+#[get("/users?<params..>")]
+pub async fn search_users(
     service: &State<UserService>,
-) -> Result<Json<Vec<UserProfileResponse>>, (Status, Json<String>)> {
-    match service.get_all_users(500).await {
-        Ok(users_struct) => Ok(Json(
-            users_struct
-                .into_iter()
-                .map(|user| UserProfileResponse::from(user))
-                .collect(),
-        )),
+    params: UserSearchParams,
+) -> Result<Json<PaginatedResponse<UserProfileResponse>>, (Status, Json<String>)> {
+    match service
+        .search_users(params.page, params.per_page, params.query)
+        .await
+    {
+        Ok(users) => Ok(Json(users)),
         Err(e) => {
-            eprintln!("Error loading users: {}", e);
-            Err((
-                Status::InternalServerError,
-                Json("Internal server error".into()),
-            ))
+            eprintln!("{}", e.to_string());
+            let status = match e {
+                ServiceError::Validation { .. } => Status::BadRequest,
+                _ => Status::InternalServerError,
+            };
+            Err((status, Json(e.to_string())))
         }
     }
 }
-#[get("/users/<id>")]
+
+#[get("/users/id/<id>")]
 pub async fn get_user_by_id(
     id: Uuid,
     service: &State<UserService>,
@@ -49,7 +50,7 @@ pub async fn get_user_by_id(
     }
 }
 
-#[get("/users?<username>")]
+#[get("/users/username/<username>")]
 pub async fn get_user_by_username(
     username: String,
     service: &State<UserService>,

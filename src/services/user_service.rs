@@ -2,8 +2,12 @@ use uuid::Uuid;
 
 use crate::{
     db::{
-        dto::user_dto::UpdateProfileRequest,
+        dto::{
+            user_dto::{UpdateProfileRequest, UserProfileResponse},
+            PaginatedResponse,
+        },
         models::user_models::{User, UserProfileChangeset},
+        pagination::Pagination,
         repos::user_repository::UserRepository,
     },
     services::error::ServiceError,
@@ -36,6 +40,30 @@ impl UserService {
             .map_err(ServiceError::from)?
             .ok_or(ServiceError::NotFound)?;
         Ok(user)
+    }
+
+    pub async fn search_users(
+        &self,
+        page: i64,
+        per_page: i64,
+        query: Option<String>,
+    ) -> Result<PaginatedResponse<UserProfileResponse>, ServiceError> {
+        let pagination = Pagination::new(page, per_page, 100).map_err(ServiceError::from)?;
+        let (users, total) = self
+            .repo
+            .search_users(pagination, query)
+            .await
+            .map_err(ServiceError::from)?;
+        let data = users
+            .into_iter()
+            .map(|user| -> UserProfileResponse { UserProfileResponse::from(user) })
+            .collect();
+        Ok(PaginatedResponse {
+            data,
+            total,
+            page,
+            per_page,
+        })
     }
 
     pub async fn get_all_users(&self, limit: i64) -> Result<Vec<User>, ServiceError> {

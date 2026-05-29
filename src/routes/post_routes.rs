@@ -1,4 +1,4 @@
-use crate::db::dto::post_dto::PostResponse;
+use crate::db::dto::post_dto::{PostResponse, PostSearchParams};
 use crate::db::dto::PaginatedResponse;
 use crate::db::models::post_models::{NewPost, Post, PostChangeset};
 use crate::routes::jwt::Auth;
@@ -8,15 +8,6 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use uuid::Uuid;
-
-#[derive(FromForm)]
-pub struct PostSearchParams {
-    pub query: Option<String>,
-    #[field(default = 1)]
-    pub page: i64,
-    #[field(default = 10)]
-    pub per_page: i64,
-}
 
 #[get("/posts?<params..>")]
 pub async fn search_posts(

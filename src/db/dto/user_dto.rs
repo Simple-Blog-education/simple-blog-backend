@@ -4,6 +4,15 @@ use uuid::Uuid;
 
 use crate::db::models::user_models::User;
 
+#[derive(FromForm)]
+pub struct UserSearchParams {
+    pub query: Option<String>,
+    #[field(default = 1)]
+    pub page: i64,
+    #[field(default = 10)]
+    pub per_page: i64,
+}
+
 // Запросы
 
 #[derive(Debug, Deserialize)]

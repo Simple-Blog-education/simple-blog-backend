@@ -8,5 +8,6 @@ pub struct PaginatedResponse<T: Serialize> {
     pub per_page: i64,
 }
 
+pub mod comment_dto;
 pub mod post_dto;
 pub mod user_dto;

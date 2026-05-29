@@ -1,6 +1,7 @@
 use crate::db::db_connection::DbPool;
 use crate::db::models::post_models::{NewPost, Post, PostChangeset};
 use crate::db::models::user_models::User;
+use crate::db::pagination::Pagination;
 use crate::db::repos::error::RepositoryError;
 use crate::db::repos::helpers::DieselRepository;
 use crate::schema::posts::dsl::posts;
@@ -31,8 +32,7 @@ impl PostRepository {
 
     pub async fn search_posts(
         &self,
-        page: i64,
-        per_page: i64,
+        pagination: Pagination,
         query: Option<String>,
     ) -> Result<(Vec<(Post, User)>, i64), RepositoryError> {
         let q = query.map(|s| s.to_string());
@@ -49,14 +49,12 @@ impl PostRepository {
 
             let total: i64 = posts.select(diesel::dsl::count_star()).first(conn)?;
 
-            let offset = (page - 1) * per_page;
-
             let items = base_query
                 .inner_join(users::table)
                 .select((Post::as_select(), User::as_select()))
                 .order(create_date.desc())
-                .limit(per_page)
-                .offset(offset)
+                .limit(pagination.limit)
+                .offset(pagination.offset)
                 .load::<(Post, User)>(conn)?;
 
             Ok((items, total))

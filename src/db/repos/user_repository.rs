@@ -1,5 +1,6 @@
 use crate::db::db_connection::DbPool;
 use crate::db::models::user_models::{NewUser, User, UserProfileChangeset};
+use crate::db::pagination::Pagination;
 use crate::db::repos::error::RepositoryError;
 use crate::db::repos::helpers::DieselRepository;
 use crate::schema::users;
@@ -45,6 +46,38 @@ impl UserRepository {
                 .first(conn)
                 .optional()
                 .map_err(RepositoryError::from)
+        })
+        .await
+    }
+
+    pub async fn search_users(
+        &self,
+        pagination: Pagination,
+        query: Option<String>,
+    ) -> Result<(Vec<User>, i64), RepositoryError> {
+        let q = query.map(|s| s.to_string());
+        self.run_blocking(move |conn| {
+            let mut base_query = users::table.into_boxed();
+            if let Some(ref search) = q {
+                let pattern = format!("%{}%", search);
+                base_query = base_query.filter(
+                    users::username
+                        .ilike(pattern.clone())
+                        .or(users::first_name.ilike(pattern.clone()))
+                        .or(users::last_name.ilike(pattern)),
+                );
+            }
+
+            let total: i64 = users::table.select(diesel::dsl::count_star()).first(conn)?;
+
+            let items = base_query
+                .select(User::as_select())
+                .order(users::reg_date.desc())
+                .limit(pagination.limit)
+                .offset(pagination.offset)
+                .load::<User>(conn)?;
+
+            Ok((items, total))
         })
         .await
     }

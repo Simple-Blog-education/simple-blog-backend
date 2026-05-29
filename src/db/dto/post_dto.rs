@@ -3,6 +3,15 @@ use uuid::Uuid;
 
 use crate::db::models::{post_models::Post, user_models::User};
 
+#[derive(FromForm)]
+pub struct PostSearchParams {
+    pub query: Option<String>,
+    #[field(default = 1)]
+    pub page: i64,
+    #[field(default = 10)]
+    pub per_page: i64,
+}
+
 #[derive(Serialize)]
 pub struct PostResponse {
     pub id: Uuid,

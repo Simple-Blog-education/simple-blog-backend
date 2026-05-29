@@ -4,6 +4,7 @@ use crate::{
     db::{
         dto::{post_dto::PostResponse, PaginatedResponse},
         models::post_models::{NewPost, Post, PostChangeset},
+        pagination::Pagination,
         repos::post_repository::PostRepository,
     },
     services::error::ServiceError,
@@ -24,20 +25,10 @@ impl PostService {
         per_page: i64,
         query: Option<String>,
     ) -> Result<PaginatedResponse<PostResponse>, ServiceError> {
-        let offset = (page - 1) * per_page;
-        if per_page < 1 || per_page > 100 {
-            return Err(ServiceError::Validation {
-                reason: "100 items is max on 1 page".into(),
-            });
-        }
-        if offset < 0 {
-            return Err(ServiceError::Validation {
-                reason: "offset must be >= 0".into(),
-            });
-        }
+        let pagination = Pagination::new(page, per_page, 100).map_err(ServiceError::from)?;
         let (posts_db, total) = self
             .repo
-            .search_posts(page, per_page, query)
+            .search_posts(pagination, query)
             .await
             .map_err(ServiceError::from)?;
 

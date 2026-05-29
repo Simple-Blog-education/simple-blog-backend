@@ -64,7 +64,7 @@ fn rocket() -> _ {
                 auth_routes::change_password,
                 user_routes::get_user_by_id,
                 user_routes::get_user_by_username,
-                user_routes::user_all,
+                user_routes::search_users,
                 user_routes::delete_user,
                 user_routes::put_user,
                 post_routes::get_post_by_id,
