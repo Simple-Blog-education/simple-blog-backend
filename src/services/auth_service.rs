@@ -40,7 +40,7 @@ impl AuthService {
             .ok_or(ServiceError::NotFound)?;
         let password_matches = verify(credentials.password, &user.password_hash)?;
         if password_matches {
-            let claims = Claims::new(user.username, TokenType::Auth);
+            let claims = Claims::new(user.username, user.id, TokenType::Auth);
             let token =
                 JWT::make_token(&claims, get_default_secret()).map_err(ServiceError::from)?;
             let login_data = AuthResponse {

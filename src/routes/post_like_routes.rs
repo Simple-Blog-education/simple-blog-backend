@@ -6,23 +6,6 @@ use rocket::serde::json::Json;
 use rocket::State;
 use uuid::Uuid;
 
-#[get("/likes/posts/<post_id>")]
-pub async fn get_post_likes(
-    post_id: Uuid,
-    service: &State<PostLikeService>,
-) -> Result<Json<i64>, (Status, Json<String>)> {
-    match service.get_likes(post_id).await {
-        Ok(likes) => Ok(Json(likes)),
-        Err(e) => {
-            eprintln!("Error loading likes: {}", e);
-            Err((
-                Status::InternalServerError,
-                Json("Internal server error".into()),
-            ))
-        }
-    }
-}
-
 #[get("/users/id/<user_id>/post_likes/<post_id>")]
 pub async fn post_is_liked_by_user(
     user_id: Uuid,

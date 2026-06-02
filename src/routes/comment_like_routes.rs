@@ -6,26 +6,6 @@ use rocket::serde::json::Json;
 use rocket::State;
 use uuid::Uuid;
 
-#[get("/likes/comments/<comment_id>")]
-pub async fn get_comment_likes(
-    comment_id: Uuid,
-    service: &State<CommentLikeService>,
-) -> Result<Json<i64>, (Status, Json<String>)> {
-    match service.get_likes(comment_id).await {
-        Ok(likes) => Ok(Json(likes)),
-        Err(ServiceError::NotFound) => {
-            Err((Status::NotFound, Json(format!("Comment not found!").into())))
-        }
-        Err(e) => {
-            eprintln!("Error liking post: {}", e);
-            Err((
-                Status::InternalServerError,
-                Json("Internal server error".into()),
-            ))
-        }
-    }
-}
-
 #[get("/users/id/<user_id>/comment_likes/<comment_id>")]
 pub async fn comment_is_liked_by_user(
     user_id: Uuid,

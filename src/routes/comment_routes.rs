@@ -2,41 +2,41 @@ use rocket::{http::Status, serde::json::Json, State};
 use uuid::Uuid;
 
 use crate::{
-    db::models::comment_models::{Comment, CommentChangeset, NewComment},
+    db::{
+        dto::{
+            comment_dto::{CommentListParams, CommentResponse},
+            PaginatedResponse,
+        },
+        models::comment_models::{Comment, CommentChangeset, NewComment},
+    },
     routes::jwt::Auth,
     services::{comment_service::CommentService, error::ServiceError},
 };
 
-#[get("/posts/<post_id>/comments")]
+#[get("/comments?<params..>")]
 pub async fn get_comments(
-    post_id: Uuid,
+    params: CommentListParams,
+    auth: Option<Auth>,
     service: &State<CommentService>,
-) -> Result<Json<Vec<Comment>>, (Status, Json<String>)> {
-    match service.get_comments_by_post(post_id, 50).await {
+) -> Result<Json<PaginatedResponse<CommentResponse>>, (Status, Json<String>)> {
+    let current_user_id = auth.map(|a| a.1);
+    match service
+        .get_comments(
+            params.post_id,
+            params.user_id,
+            params.page,
+            params.per_page,
+            current_user_id,
+        )
+        .await
+    {
         Ok(comments) => Ok(Json(comments)),
         Err(e) => {
-            eprintln!("Error loading posts: {}", e);
-            Err((
-                Status::InternalServerError,
-                Json("Internal server error".into()),
-            ))
-        }
-    }
-}
-
-#[get("/users/id/<user_id>/comments")]
-pub async fn get_comments_user(
-    user_id: Uuid,
-    service: &State<CommentService>,
-) -> Result<Json<Vec<Comment>>, (Status, Json<String>)> {
-    match service.get_comments_by_user(user_id, 50).await {
-        Ok(comments) => Ok(Json(comments)),
-        Err(e) => {
-            eprintln!("Error loading posts: {}", e);
-            Err((
-                Status::InternalServerError,
-                Json("Internal server error".into()),
-            ))
+            let status = match e {
+                ServiceError::Validation { .. } => Status::BadRequest,
+                _ => Status::InternalServerError,
+            };
+            Err((status, Json(e.to_string())))
         }
     }
 }

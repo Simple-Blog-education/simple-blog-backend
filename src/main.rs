@@ -37,13 +37,14 @@ fn rocket() -> _ {
     let post_service = PostService::new(post_repo);
 
     let comment_repo = CommentRepository::new(pool.clone());
-    let comment_service = CommentService::new(comment_repo);
 
     let post_like_repo = PostLikeRepository::new(pool.clone());
     let post_like_service = PostLikeService::new(post_like_repo);
 
     let comment_like_repo = CommentLikeRepository::new(pool.clone());
-    let comment_like_service = CommentLikeService::new(comment_like_repo);
+    let comment_like_service = CommentLikeService::new(comment_like_repo.clone());
+
+    let comment_service = CommentService::new(comment_repo, comment_like_repo);
 
     rocket::build()
         .manage(pool)
@@ -73,15 +74,12 @@ fn rocket() -> _ {
                 post_routes::put_post,
                 post_routes::delete_post,
                 comment_routes::get_comments,
-                comment_routes::get_comments_user,
                 comment_routes::delete_comment,
                 comment_routes::put_comment,
                 comment_routes::post_comment,
-                comment_like_routes::get_comment_likes,
                 comment_like_routes::comment_is_liked_by_user,
                 comment_like_routes::like_comment,
                 comment_like_routes::unlike_comment,
-                post_like_routes::get_post_likes,
                 post_like_routes::post_is_liked_by_user,
                 post_like_routes::like_post,
                 post_like_routes::unlike_post
