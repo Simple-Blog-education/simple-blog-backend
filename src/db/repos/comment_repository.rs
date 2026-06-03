@@ -2,7 +2,7 @@ use crate::db::models::comment_models::{Comment, CommentChangeset, NewComment};
 use crate::db::pagination::Pagination;
 use crate::db::repos::error::RepositoryError;
 use crate::db::{db_connection::DbPool, repos::helpers::DieselRepository};
-use crate::schema::{comments, users};
+use crate::schema::{comments, posts, users};
 use diesel::prelude::*;
 use uuid::Uuid;
 
@@ -32,18 +32,19 @@ impl CommentRepository {
             let mut query = comments::table
                 .inner_join(users::table.on(comments::user_id.eq(users::id)))
                 .into_boxed();
-
+            let mut total_query = comments::table
+                .inner_join(users::table.on(comments::user_id.eq(users::id)))
+                .into_boxed();
             if let Some(pid) = post_id {
                 query = query.filter(comments::post_id.eq(pid));
+                total_query = total_query.filter(comments::post_id.eq(pid));
             }
             if let Some(uid) = user_id {
                 query = query.filter(comments::user_id.eq(uid));
+                total_query = total_query.filter(comments::user_id.eq(uid));
             }
 
-            let total: i64 = comments::table
-                .inner_join(users::table.on(comments::user_id.eq(users::id)))
-                .select(diesel::dsl::count_star())
-                .first(conn)?;
+            let total = total_query.select(diesel::dsl::count_star()).first(conn)?;
 
             let items = query
                 .select((Comment::as_select(), users::username))
