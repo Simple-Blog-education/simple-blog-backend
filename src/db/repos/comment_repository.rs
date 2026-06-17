@@ -2,7 +2,7 @@ use crate::db::models::comment_models::{Comment, CommentChangeset, NewComment};
 use crate::db::pagination::Pagination;
 use crate::db::repos::error::RepositoryError;
 use crate::db::{db_connection::DbPool, repos::helpers::DieselRepository};
-use crate::schema::{comments, posts, users};
+use crate::schema::{comments, users};
 use diesel::prelude::*;
 use uuid::Uuid;
 

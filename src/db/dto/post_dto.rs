@@ -21,10 +21,12 @@ pub struct PostResponse {
     pub edit_date: chrono::DateTime<chrono::Utc>,
     pub author_username: String,
     pub author_name: Option<String>,
+    pub likes: i64,
+    pub is_liked: bool,
 }
 
 impl PostResponse {
-    pub fn from_post(p: Post, u: User) -> Self {
+    pub fn from_post_and_user(p: Post, u: User, likes: i64, is_liked: bool) -> Self {
         let author_name = match (u.first_name.as_deref(), u.last_name.as_deref()) {
             (Some(first), Some(last)) => Some(format!("{} {}", first, last)),
             (Some(name), None) | (None, Some(name)) => Some(name.to_string()),
@@ -37,7 +39,9 @@ impl PostResponse {
             create_date: p.create_date,
             edit_date: p.edit_date,
             author_username: u.username,
-            author_name: author_name,
+            author_name,
+            likes,
+            is_liked,
         }
     }
 }

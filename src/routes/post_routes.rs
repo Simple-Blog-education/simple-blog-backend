@@ -13,9 +13,11 @@ use uuid::Uuid;
 pub async fn search_posts(
     service: &State<PostService>,
     params: PostSearchParams,
+    auth: Option<Auth>,
 ) -> Result<Json<PaginatedResponse<PostResponse>>, (Status, Json<String>)> {
+    let current_user_id = auth.map(|a| a.1);
     match service
-        .search_posts(params.page, params.per_page, params.query)
+        .search_posts(params.page, params.per_page, params.query, current_user_id)
         .await
     {
         Ok(posts) => Ok(Json(posts)),
@@ -34,8 +36,10 @@ pub async fn search_posts(
 pub async fn get_post_by_id(
     id: Uuid,
     service: &State<PostService>,
-) -> Result<Json<Post>, (Status, Json<String>)> {
-    match service.get_post_by_id(id).await {
+    auth: Option<Auth>,
+) -> Result<Json<PostResponse>, (Status, Json<String>)> {
+    let current_user_id = auth.map(|a| a.1);
+    match service.get_post_by_id(id, current_user_id).await {
         Ok(post) => Ok(Json(post)),
         Err(ServiceError::NotFound) => Err((
             Status::NotFound,

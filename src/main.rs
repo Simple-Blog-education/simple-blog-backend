@@ -33,13 +33,13 @@ fn rocket() -> _ {
     let user_service = UserService::new(user_repo.clone());
     let auth_service = AuthService::new(user_repo);
 
+    let post_like_repo = PostLikeRepository::new(pool.clone());
+    let post_like_service = PostLikeService::new(post_like_repo.clone());
+
     let post_repo = PostRepository::new(pool.clone());
-    let post_service = PostService::new(post_repo);
+    let post_service = PostService::new(post_repo, post_like_repo);
 
     let comment_repo = CommentRepository::new(pool.clone());
-
-    let post_like_repo = PostLikeRepository::new(pool.clone());
-    let post_like_service = PostLikeService::new(post_like_repo);
 
     let comment_like_repo = CommentLikeRepository::new(pool.clone());
     let comment_like_service = CommentLikeService::new(comment_like_repo.clone());
