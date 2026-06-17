@@ -1,4 +1,5 @@
-use crate::db::models::user_models::{User, UserChangeset};
+use crate::db::dto::user_dto::{UpdateProfileRequest, UserProfileResponse, UserSearchParams};
+use crate::db::dto::PaginatedResponse;
 use crate::routes::jwt::Auth;
 use crate::services::error::ServiceError;
 use crate::services::user_service::UserService;
@@ -7,29 +8,34 @@ use rocket::serde::json::Json;
 use rocket::State;
 use uuid::Uuid;
 
-#[get("/users/all")]
-pub async fn user_all(
-    _jwt: Auth,
+#[get("/users?<params..>")]
+pub async fn search_users(
     service: &State<UserService>,
-) -> Result<Json<Vec<User>>, (Status, Json<String>)> {
-    match service.get_all_users(500).await {
-        Ok(users_struct) => Ok(Json(users_struct)),
+    params: UserSearchParams,
+) -> Result<Json<PaginatedResponse<UserProfileResponse>>, (Status, Json<String>)> {
+    match service
+        .search_users(params.page, params.per_page, params.query)
+        .await
+    {
+        Ok(users) => Ok(Json(users)),
         Err(e) => {
-            eprintln!("Error loading users: {}", e);
-            Err((
-                Status::InternalServerError,
-                Json("Internal server error".into()),
-            ))
+            eprintln!("{}", e.to_string());
+            let status = match e {
+                ServiceError::Validation { .. } => Status::BadRequest,
+                _ => Status::InternalServerError,
+            };
+            Err((status, Json(e.to_string())))
         }
     }
 }
-#[get("/users/<id>")]
+
+#[get("/users/id/<id>")]
 pub async fn get_user_by_id(
     id: Uuid,
     service: &State<UserService>,
-) -> Result<Json<User>, (Status, Json<String>)> {
+) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
     match service.get_user_by_id(id).await {
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => Ok(Json(UserProfileResponse::from(user))),
         Err(ServiceError::NotFound) => Err((
             Status::NotFound,
             Json(format!("User with id {} not found", id).into()),
@@ -44,13 +50,13 @@ pub async fn get_user_by_id(
     }
 }
 
-#[get("/users?<username>")]
+#[get("/users/username/<username>")]
 pub async fn get_user_by_username(
     username: String,
     service: &State<UserService>,
-) -> Result<Json<User>, (Status, Json<String>)> {
+) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
     match service.get_user_by_username(username.clone()).await {
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => Ok(Json(UserProfileResponse::from(user))),
         Err(ServiceError::NotFound) => Err((
             Status::NotFound,
             Json(format!("User with username {} not found", username.clone()).into()),
@@ -68,12 +74,12 @@ pub async fn get_user_by_username(
 #[put("/users/<id>", format = "json", data = "<data>")]
 pub async fn put_user(
     id: Uuid,
-    data: Json<UserChangeset>,
+    data: Json<UpdateProfileRequest>,
     _token: Auth,
     service: &State<UserService>,
-) -> Result<(Status, Json<User>), (Status, Json<String>)> {
+) -> Result<(Status, Json<UserProfileResponse>), (Status, Json<String>)> {
     match service.put_user(id, data.into_inner()).await {
-        Ok(changed) => Ok((Status::Created, Json(changed))),
+        Ok(user) => Ok((Status::Created, Json(UserProfileResponse::from(user)))),
         Err(ServiceError::NotFound) => Err((
             Status::NotFound,
             Json(format!("User with id {} not found", id).into()),
