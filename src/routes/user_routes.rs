@@ -125,6 +125,7 @@ pub struct AvatarUpload<'f> {
     pub file: TempFile<'f>,
 }
 
+#[post("/users/me/avatar", data = "<upload>")]
 pub async fn upload_avatar(
     upload: Form<AvatarUpload<'_>>,
     auth: Auth,
