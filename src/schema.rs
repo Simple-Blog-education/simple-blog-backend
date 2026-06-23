@@ -45,6 +45,7 @@ diesel::table! {
         last_name -> Nullable<Varchar>,
         reg_date -> Timestamptz,
         role -> Text,
+        avatar_url -> Nullable<Varchar>,
     }
 }
 

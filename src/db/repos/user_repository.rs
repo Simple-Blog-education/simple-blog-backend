@@ -140,4 +140,19 @@ impl UserRepository {
         })
         .await
     }
+
+    pub async fn update_avatar_url(
+        &self,
+        user_id: Uuid,
+        avatar_url: Option<String>,
+    ) -> Result<User, RepositoryError> {
+        self.run_blocking(move |conn| {
+            diesel::update(users::table.find(user_id))
+                .set(users::avatar_url.eq(avatar_url))
+                .returning(User::as_select())
+                .get_result(conn)
+                .map_err(RepositoryError::from)
+        })
+        .await
+    }
 }

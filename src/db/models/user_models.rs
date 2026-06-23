@@ -17,6 +17,7 @@ pub struct User {
     pub last_name: Option<String>,
     pub reg_date: DateTime<Utc>,
     pub role: String,
+    pub avatar_url: Option<String>,
 }
 
 #[derive(Insertable)]
