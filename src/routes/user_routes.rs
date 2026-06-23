@@ -3,6 +3,8 @@ use crate::db::dto::PaginatedResponse;
 use crate::routes::jwt::Auth;
 use crate::services::error::ServiceError;
 use crate::services::user_service::UserService;
+use rocket::form::Form;
+use rocket::fs::TempFile;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -110,6 +112,30 @@ pub async fn delete_user(
         },
         Err(e) => {
             eprintln!("Error loading user with id: {}: {}", id, e);
+            Err((
+                Status::InternalServerError,
+                Json("Internal server error".into()),
+            ))
+        }
+    }
+}
+
+#[derive(FromForm)]
+pub struct AvatarUpload<'f> {
+    pub file: TempFile<'f>,
+}
+
+#[post("/users/me/avatar", data = "<upload>")]
+pub async fn upload_avatar(
+    upload: Form<AvatarUpload<'_>>,
+    auth: Auth,
+    service: &State<UserService>,
+) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
+    let file = upload.into_inner().file;
+    match service.update_avatar(auth.1, file).await {
+        Ok(user) => Ok(Json(user)),
+        Err(e) => {
+            eprintln!("Error uploading avatar for user with id: {}: {}", auth.1, e);
             Err((
                 Status::InternalServerError,
                 Json("Internal server error".into()),

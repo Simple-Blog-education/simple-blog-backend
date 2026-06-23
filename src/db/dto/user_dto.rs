@@ -54,6 +54,7 @@ pub struct UserProfileResponse {
     pub last_name: Option<String>,
     pub reg_date: DateTime<Utc>,
     pub role: String,
+    pub avatar_url: Option<String>,
 }
 
 impl From<User> for UserProfileResponse {
@@ -66,6 +67,7 @@ impl From<User> for UserProfileResponse {
             last_name: user.last_name,
             reg_date: user.reg_date,
             role: user.role,
+            avatar_url: user.avatar_url,
         }
     }
 }

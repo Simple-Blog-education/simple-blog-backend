@@ -1,3 +1,4 @@
+use rocket::{fs::TempFile, tokio::fs};
 use uuid::Uuid;
 
 use crate::{
@@ -15,11 +16,15 @@ use crate::{
 
 pub struct UserService {
     repo: UserRepository,
+    upload_dir: String,
 }
 
 impl UserService {
     pub fn new(repo: UserRepository) -> Self {
-        Self { repo }
+        Self {
+            repo,
+            upload_dir: "uploads".to_string(),
+        }
     }
 
     pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<User, ServiceError> {
@@ -96,5 +101,44 @@ impl UserService {
             .await
             .map_err(ServiceError::from)?;
         Ok(success)
+    }
+
+    pub async fn update_avatar(
+        &self,
+        user_id: Uuid,
+        mut file: TempFile<'_>,
+    ) -> Result<UserProfileResponse, ServiceError> {
+        if let Some(content_type) = file.content_type() {
+            if !content_type.is_png() && !content_type.is_jpeg() {
+                return Err(ServiceError::Validation {
+                    reason: "Only JPEG or PNG images allowed".into(),
+                });
+            }
+        }
+
+        let ext = file
+            .content_type()
+            .map(|ct| ct.extension().unwrap_or("jpg".into()))
+            .unwrap_or("jpg".into());
+
+        let filename = format!("{}.{}", Uuid::new_v4(), ext);
+        let relative_path = format!("avatars/{}", filename);
+        let abs_path = format!("{}/{}", self.upload_dir, relative_path);
+
+        if let Some(parent) = std::path::Path::new(&abs_path).parent() {
+            fs::create_dir_all(parent)
+                .await
+                .map_err(|_| ServiceError::Internal)?;
+        }
+        file.copy_to(&abs_path)
+            .await
+            .map_err(|_| ServiceError::Internal)?;
+
+        let avatar_url = format!("/{}/{}", self.upload_dir, relative_path);
+        let updated_user = self
+            .repo
+            .update_avatar_url(user_id, Some(avatar_url))
+            .await?;
+        Ok(UserProfileResponse::from(updated_user))
     }
 }

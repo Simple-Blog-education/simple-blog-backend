@@ -3,6 +3,7 @@ pub mod routes;
 pub mod schema;
 pub mod services;
 use db::repos::{post_repository::PostRepository, user_repository::UserRepository};
+use rocket::fs::FileServer;
 use routes::cors::cors_fairing;
 use routes::{
     auth_routes, comment_like_routes, comment_routes, index::index, post_like_routes, post_routes,
@@ -47,6 +48,7 @@ fn rocket() -> _ {
     let comment_service = CommentService::new(comment_repo, comment_like_repo);
 
     rocket::build()
+        .mount("/uploads", FileServer::from("uploads"))
         .manage(pool)
         .manage(user_service)
         .manage(auth_service)
@@ -68,6 +70,7 @@ fn rocket() -> _ {
                 user_routes::search_users,
                 user_routes::delete_user,
                 user_routes::put_user,
+                user_routes::upload_avatar,
                 post_routes::get_post_by_id,
                 post_routes::search_posts,
                 post_routes::create_post,
