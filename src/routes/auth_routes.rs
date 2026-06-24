@@ -47,7 +47,7 @@ pub async fn get_current_user(
     jwt: Auth,
     service: &State<AuthService>,
 ) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
-    let username = jwt.0;
+    let username = jwt.username;
     match service.get_current_user(username).await {
         Ok(user) => Ok(Json(UserProfileResponse::from(user))),
         Err(e) => {
@@ -66,7 +66,7 @@ pub async fn change_password(
     jwt: Auth,
     service: &State<AuthService>,
 ) -> Result<Json<bool>, (Status, Json<String>)> {
-    let username = jwt.0;
+    let username = jwt.username;
     match service.change_password(username, data.0).await {
         Ok(success) => Ok(Json(success)),
         Err(ServiceError::InvalidOldPassword) => Err((

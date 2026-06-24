@@ -19,7 +19,7 @@ pub async fn get_comments(
     auth: Option<Auth>,
     service: &State<CommentService>,
 ) -> Result<Json<PaginatedResponse<CommentResponse>>, (Status, Json<String>)> {
-    let current_user_id = auth.map(|a| a.1);
+    let current_user_id = auth.map(|a| a.user_id);
     match service
         .get_comments(
             params.post_id,
@@ -45,9 +45,12 @@ pub async fn get_comments(
 pub async fn put_comment(
     id: Uuid,
     comment: Json<CommentChangeset>,
-    _jwt: Auth,
+    auth: Auth,
     service: &State<CommentService>,
 ) -> Result<Json<Comment>, (Status, Json<String>)> {
+    if auth.user_id != id && auth.role != "admin" {
+        return Err((Status::Forbidden, Json("Access denied".into())));
+    }
     match service.put_comment(id, comment.into_inner()).await {
         Ok(comment) => Ok(Json(comment)),
         Err(ServiceError::NotFound) => Err((
@@ -67,7 +70,7 @@ pub async fn put_comment(
 #[post("/comments/new", format = "json", data = "<comment>")]
 pub async fn post_comment(
     comment: Json<NewComment>,
-    _jwt: Auth,
+    _auth: Auth,
     service: &State<CommentService>,
 ) -> Result<Json<String>, (Status, Json<String>)> {
     match service.create_comment(comment.into_inner()).await {
@@ -85,9 +88,12 @@ pub async fn post_comment(
 #[delete("/comments/<id>")]
 pub async fn delete_comment(
     id: Uuid,
-    _jwt: Auth,
+    auth: Auth,
     service: &State<CommentService>,
 ) -> Result<Status, (Status, Json<String>)> {
+    if auth.user_id != id && auth.role != "admin" {
+        return Err((Status::Forbidden, Json("Access denied".into())));
+    }
     match service.delete_comment(id).await {
         Ok(is_deleted) => match is_deleted {
             true => Ok(Status::NoContent),

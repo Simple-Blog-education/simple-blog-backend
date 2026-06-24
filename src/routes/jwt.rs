@@ -1,4 +1,5 @@
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use chrono::{Duration, Utc};
 use dotenvy::dotenv;
 use hmac::{Hmac, Mac};
 use rocket::{
@@ -37,17 +38,27 @@ pub enum TokenType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    username: String,
-    user_id: Uuid,
-    auth: TokenType,
+    pub username: String,
+    pub user_id: Uuid,
+    pub role: String,
+    pub auth: TokenType,
+    pub exp: usize,
 }
 
 impl Claims {
-    pub fn new(username: String, user_id: Uuid, auth: TokenType) -> Claims {
+    pub fn new(
+        username: String,
+        user_id: Uuid,
+        role: String,
+        auth: TokenType,
+        ttl_hours: usize,
+    ) -> Claims {
         Claims {
             username,
             user_id,
+            role,
             auth,
+            exp: (Utc::now() + Duration::hours(ttl_hours as i64)).timestamp() as usize,
         }
     }
 
@@ -90,6 +101,11 @@ impl JWT {
         let claims: Claims =
             serde_json::from_slice(&payload_json).map_err(|_| JWTError::Invalid)?;
 
+        let now = Utc::now().timestamp() as usize;
+        if claims.exp < now {
+            return Err(JWTError::Expired);
+        }
+
         Ok(claims)
     }
 
@@ -128,9 +144,15 @@ pub enum JWTError {
     Invalid,
     #[error("JWT bad format")]
     BadFormat,
+    #[error("JWT expired")]
+    Expired,
 }
 
-pub struct Auth(pub String, pub Uuid);
+pub struct Auth {
+    pub user_id: Uuid,
+    pub username: String,
+    pub role: String,
+}
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Auth {
@@ -147,10 +169,29 @@ impl<'r> FromRequest<'r> for Auth {
 
         let secret = get_default_secret();
         match JWT::verify_signature(&secret, token) {
-            Ok(claims) => Outcome::Success(Auth(claims.username, claims.user_id)),
+            Ok(claims) => Outcome::Success(Auth {
+                username: claims.username,
+                user_id: claims.user_id,
+                role: claims.role,
+            }),
             Err(e) => Outcome::Error((Status::Unauthorized, e)),
         }
     }
 }
 
-// TODO: Проверка на текущую роль будет сделана в AuthService
+pub struct AdminGuard(pub Auth);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AdminGuard {
+    type Error = JWTError;
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let auth = request.guard::<Auth>().await;
+        match auth {
+            Outcome::Success(auth) if auth.role == "admin" => Outcome::Success(AdminGuard(auth)),
+            Outcome::Success(_) => Outcome::Forward(Status::Forbidden),
+            Outcome::Error(e) => Outcome::Error(e),
+            Outcome::Forward(f) => Outcome::Forward(f),
+        }
+    }
+}

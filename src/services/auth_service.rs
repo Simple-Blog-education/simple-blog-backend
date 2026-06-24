@@ -2,7 +2,6 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 
 use crate::db::dto::user_dto::{AuthResponse, ChangePasswordRequest, SignInRequest, SignUpRequest};
 use crate::db::models::user_models::{NewUser, User};
-use crate::db::models::user_role::UserRole;
 use crate::db::repos::user_repository::UserRepository;
 use crate::routes::jwt::{get_default_secret, Claims, TokenType, JWT};
 use crate::services::error::ServiceError;
@@ -40,7 +39,7 @@ impl AuthService {
             .ok_or(ServiceError::NotFound)?;
         let password_matches = verify(credentials.password, &user.password_hash)?;
         if password_matches {
-            let claims = Claims::new(user.username, user.id, TokenType::Auth);
+            let claims = Claims::new(user.username, user.id, user.role, TokenType::Auth, 24);
             let token =
                 JWT::make_token(&claims, get_default_secret()).map_err(ServiceError::from)?;
             let login_data = AuthResponse {
@@ -53,21 +52,6 @@ impl AuthService {
                 reason: "Invalid password".to_string(),
             })
         }
-    }
-    // check for role
-    pub async fn check_user_role(
-        &self,
-        username: String,
-        expected_role: UserRole,
-    ) -> Result<bool, ServiceError> {
-        let user = self
-            .repo
-            .find_by_username(username)
-            .await
-            .map_err(ServiceError::from)?
-            .ok_or(ServiceError::Internal)?;
-        let role = UserRole::from(user.role);
-        Ok(role.value() < expected_role.value())
     }
 
     pub async fn get_current_user(&self, username: String) -> Result<User, ServiceError> {

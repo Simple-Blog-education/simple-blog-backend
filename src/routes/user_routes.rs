@@ -77,9 +77,12 @@ pub async fn get_user_by_username(
 pub async fn put_user(
     id: Uuid,
     data: Json<UpdateProfileRequest>,
-    _token: Auth,
+    auth: Auth,
     service: &State<UserService>,
 ) -> Result<(Status, Json<UserProfileResponse>), (Status, Json<String>)> {
+    if auth.user_id != id && auth.role != "admin" {
+        return Err((Status::Forbidden, Json("Access denied".into())));
+    }
     match service.put_user(id, data.into_inner()).await {
         Ok(user) => Ok((Status::Created, Json(UserProfileResponse::from(user)))),
         Err(ServiceError::NotFound) => Err((
@@ -99,9 +102,12 @@ pub async fn put_user(
 #[delete("/users/<id>")]
 pub async fn delete_user(
     id: Uuid,
-    _jwt: Auth,
+    auth: Auth,
     service: &State<UserService>,
 ) -> Result<Status, (Status, Json<String>)> {
+    if auth.user_id != id && auth.role != "admin" {
+        return Err((Status::Forbidden, Json("Access denied".into())));
+    }
     match service.delete_user(id).await {
         Ok(msg) => match msg {
             true => Ok(Status::NoContent),
@@ -132,10 +138,13 @@ pub async fn upload_avatar(
     service: &State<UserService>,
 ) -> Result<Json<UserProfileResponse>, (Status, Json<String>)> {
     let file = upload.into_inner().file;
-    match service.update_avatar(auth.1, file).await {
+    match service.update_avatar(auth.user_id, file).await {
         Ok(user) => Ok(Json(user)),
         Err(e) => {
-            eprintln!("Error uploading avatar for user with id: {}: {}", auth.1, e);
+            eprintln!(
+                "Error uploading avatar for user with id: {}: {}",
+                auth.user_id, e
+            );
             Err((
                 Status::InternalServerError,
                 Json("Internal server error".into()),

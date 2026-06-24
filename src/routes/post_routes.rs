@@ -1,7 +1,7 @@
 use crate::db::dto::post_dto::{PostResponse, PostSearchParams};
 use crate::db::dto::PaginatedResponse;
 use crate::db::models::post_models::{NewPost, Post, PostChangeset};
-use crate::routes::jwt::Auth;
+use crate::routes::jwt::{AdminGuard, Auth};
 use crate::services::error::ServiceError;
 use crate::services::post_service::PostService;
 use rocket::http::Status;
@@ -15,7 +15,7 @@ pub async fn search_posts(
     params: PostSearchParams,
     auth: Option<Auth>,
 ) -> Result<Json<PaginatedResponse<PostResponse>>, (Status, Json<String>)> {
-    let current_user_id = auth.map(|a| a.1);
+    let current_user_id = auth.map(|a| a.user_id);
     match service
         .search_posts(params.page, params.per_page, params.query, current_user_id)
         .await
@@ -38,7 +38,7 @@ pub async fn get_post_by_id(
     service: &State<PostService>,
     auth: Option<Auth>,
 ) -> Result<Json<PostResponse>, (Status, Json<String>)> {
-    let current_user_id = auth.map(|a| a.1);
+    let current_user_id = auth.map(|a| a.user_id);
     match service.get_post_by_id(id, current_user_id).await {
         Ok(post) => Ok(Json(post)),
         Err(ServiceError::NotFound) => Err((
@@ -58,7 +58,7 @@ pub async fn get_post_by_id(
 #[post("/posts/new", format = "json", data = "<post>")]
 pub async fn create_post(
     post: Json<NewPost>,
-    _jwt: Auth,
+    _admin: AdminGuard,
     service: &State<PostService>,
 ) -> Result<Json<String>, (Status, Json<String>)> {
     match service.create_post(post.into_inner()).await {
@@ -77,7 +77,7 @@ pub async fn create_post(
 pub async fn put_post(
     id: Uuid,
     post: Json<PostChangeset>,
-    _jwt: Auth,
+    _admin: AdminGuard,
     service: &State<PostService>,
 ) -> Result<Json<Post>, (Status, Json<String>)> {
     match service.put_post(id, post.into_inner()).await {
@@ -99,7 +99,7 @@ pub async fn put_post(
 #[delete("/posts/<id>")]
 pub async fn delete_post(
     id: Uuid,
-    _jwt: Auth,
+    _admin: AdminGuard,
     service: &State<PostService>,
 ) -> Result<Status, (Status, Json<String>)> {
     match service.delete_post(id).await {
