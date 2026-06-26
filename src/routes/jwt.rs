@@ -188,7 +188,7 @@ impl<'r> FromRequest<'r> for AdminGuard {
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let auth = request.guard::<Auth>().await;
         match auth {
-            Outcome::Success(auth) if auth.role == "admin" => Outcome::Success(AdminGuard(auth)),
+            Outcome::Success(auth) if auth.role == "Admin" => Outcome::Success(AdminGuard(auth)),
             Outcome::Success(_) => Outcome::Forward(Status::Forbidden),
             Outcome::Error(e) => Outcome::Error(e),
             Outcome::Forward(f) => Outcome::Forward(f),
